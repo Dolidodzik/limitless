@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from "react";
-import Peer from "peerjs";
-import { renderProgress } from "./utils"
+import React, { useEffect, useState, ChangeEvent } from "react";
+import Peer, { DataConnection } from "peerjs";
 
-let receivedChunks = [];
+let receivedChunks: Blob[] = [];
 
-const App = () => {
-  const [peer, setPeer] = useState(null);
-  const [connection, setConnection] = useState(null);
-  const [chatMessages, setChatMessages] = useState([]);
+const App: React.FC = () => {
+  const [peer, setPeer] = useState<Peer | null>(null);
+  const [connection, setConnection] = useState<DataConnection | null>(null);
+  const [chatMessages, setChatMessages] = useState<
+    { peerId: string; message: string }[]
+  >([]);
   const [messageInput, setMessageInput] = useState("");
   const [myPeerId, setMyPeerId] = useState("");
-  const [progress, setProgress] = useState("");
+  const [progress, setProgress] = useState<number | null>(null);
   const [totalChunks, setTotalChunks] = useState(0);
   const [fileName, setFileName] = useState("");
 
@@ -51,25 +52,24 @@ const App = () => {
     };
   }, []);
 
-  const handleReceivedData = (data) => {
+  const handleReceivedData = (data: any) => {
     if (data.dataType === "FILE_CHUNK") {
-      console.log("RECEIVED FILE_CHUNK", data)
+      console.log("RECEIVED FILE_CHUNK", data);
       const { chunk, currentChunk, totalChunks, name, type } = data;
       const chunkData = new Uint8Array(chunk);
       const fileChunk = new Blob([chunkData], { type });
 
-      receivedChunks.push(fileChunk)
-      
-      // of often do we want to upload progress bars (e.g every X chunks received)
-      if(receivedChunks.length%5 == 0){
-        setProgress(receivedChunks.length / totalChunks * 100)
+      receivedChunks.push(fileChunk);
+
+      if (receivedChunks.length % 5 === 0) {
+        setProgress((receivedChunks.length / totalChunks) * 100);
       }
 
-      console.log(receivedChunks)
+      console.log(receivedChunks);
 
       if (currentChunk === totalChunks - 1) {
-        console.log("LAST_CHUNK_RECEIVED")
-        setProgress(100)
+        console.log("LAST_CHUNK_RECEIVED");
+        setProgress(100);
         const combinedFile = new Blob(receivedChunks, { type });
         const downloadLink = URL.createObjectURL(combinedFile);
 
@@ -84,17 +84,17 @@ const App = () => {
         setFileName("");
       }
     } else {
-      // TEXT MESSAGE
       console.log("Received message:", data);
       setChatMessages((prevChatMessages) => [
         ...prevChatMessages,
-        { peerId: connection.peer, message: data },
+        { peerId: connection!.peer, message: data },
       ]);
     }
   };
 
   const connectToPeer = () => {
-    const peerId = document.getElementById("peerIdInput").value;
+    const peerId = (document.getElementById("peerIdInput") as HTMLInputElement)
+      .value;
     if (peer && peerId) {
       console.log("Initiating connection to: " + peerId);
       const conn = peer.connect(peerId);
@@ -117,7 +117,9 @@ const App = () => {
 
   const sendMessage = () => {
     if (connection && messageInput) {
-      console.log("Sending message: " + messageInput + " to " + connection.peer);
+      console.log(
+        "Sending message: " + messageInput + " to " + connection.peer
+      );
       connection.send(messageInput);
       setChatMessages((prevChatMessages) => [
         ...prevChatMessages,
@@ -127,8 +129,8 @@ const App = () => {
     }
   };
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
+  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files![0];
     const chunkSize = 64 * 1024; // 64kB chunk size
     const totalChunks = Math.ceil(file.size / chunkSize);
 
@@ -139,7 +141,7 @@ const App = () => {
     let currentChunk = 0;
 
     reader.onload = () => {
-      const arrayBuffer = reader.result;
+      const arrayBuffer = reader.result as ArrayBuffer;
       const chunkData = new Uint8Array(arrayBuffer);
 
       const chunk = {
@@ -151,7 +153,7 @@ const App = () => {
         type: file.type,
       };
 
-      connection.send(chunk);
+      connection!.send(chunk);
 
       if (currentChunk < totalChunks - 1) {
         currentChunk++;
@@ -179,7 +181,7 @@ const App = () => {
     }
   };
 
-  console.log("RE RENDERING")
+  console.log("RE RENDERING");
 
   return (
     <div>
@@ -193,13 +195,7 @@ const App = () => {
           <div>
             {chatMessages.map((chatMessage, index) => (
               <p key={index}>
-                {chatMessage.systemMessage ? (
-                  <em>{chatMessage.systemMessage}</em>
-                ) : (
-                  <span>
-                    <b>{chatMessage.peerId.substring(0, 8)}</b> {chatMessage.message}
-                  </span>
-                )}
+                {chatMessage.peerId.substring(0, 8)}: {chatMessage.message}
               </p>
             ))}
           </div>
@@ -210,8 +206,7 @@ const App = () => {
           />
           <button onClick={sendMessage}>Send</button>
           <input type="file" onChange={handleFileUpload} />
-          <button onClick={resetConnection}> RESET CONNECTION </button>
-          {renderProgress(progress, fileName)}
+          <button onClick={resetConnection}>RESET CONNECTION</button>
         </div>
       ) : (
         <div>
