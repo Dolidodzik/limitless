@@ -1,16 +1,8 @@
 import React, { useEffect, useState, ChangeEvent, useRef } from "react";
-import Peer, { DataConnection } from "peerjs";
-import { disconnect } from "process";
+import Peer from "peerjs";
+import { ChatMessage, ConnectionData } from './interfaces'
+import ChatRenderer from './utils';
 
-interface ChatMessage {
-  peerId: string;
-  message: string;
-}
-
-interface ConnectionData {
-  connection: DataConnection;
-  peerId: string;
-}
 
 let receivedChunks: Blob[] = [];
 
@@ -24,7 +16,7 @@ const App: React.FC = () => {
   const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 
   const connectionsRef = useRef<ConnectionData[]>([]);
-  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
+  const [chatLogs, setChatLogs] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
     const newPeer = new Peer();
@@ -39,17 +31,13 @@ const App: React.FC = () => {
       console.log("Incoming connection from: " + conn.peer);
 
       conn.on("open", () => {
-        console.log("Connection established with: " + conn.peer);
         const newConnectionData: ConnectionData = {
           connection: conn,
           peerId: conn.peer,
         };
         connectionsRef.current = [...connectionsRef.current, newConnectionData];
-        setChatMessages((prevChatMessages) => ({
-          ...prevChatMessages,
-          [conn.peer]: [],
-        }));
-        forceUpdate();
+        console.log("Connection established with: " + conn.peer);
+        addSystemMessage("Connection established with: " + conn.peer)
       });
 
       conn.on("data", (data) => {
@@ -58,9 +46,9 @@ const App: React.FC = () => {
       });
 
       conn.on("close", () => {
-        console.log("Connection closed with: " + conn.peer);
         connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== conn.peer);
-        forceUpdate();
+        console.log("Connection closed with: " + conn.peer);
+        addSystemMessage("Connection closed with: " + conn.peer)
       });
     });
 
@@ -68,7 +56,7 @@ const App: React.FC = () => {
       console.log("RETURN USEEFFECT CLEANUP");
       connectionsRef.current.forEach((c) => c.connection.close());
       connectionsRef.current = [];
-      setChatMessages({});
+      setChatLogs([]);
       newPeer.disconnect();
       newPeer.destroy();
     };
@@ -108,10 +96,7 @@ const App: React.FC = () => {
     } else {
       console.log("Received message:", data);
       const chatMessage: ChatMessage = { peerId: senderPeerId, message: data };
-      setChatMessages((prevChatMessages) => ({
-        ...prevChatMessages,
-        [senderPeerId]: [...prevChatMessages[senderPeerId], chatMessage],
-      }));
+      setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
     }
   };
 
@@ -122,17 +107,13 @@ const App: React.FC = () => {
       const conn = peer.connect(peerId);
 
       conn.on("open", () => {
-        console.log("Connection established with: " + conn.peer);
         const newConnectionData: ConnectionData = {
           connection: conn,
           peerId: conn.peer,
         };
         connectionsRef.current = [...connectionsRef.current, newConnectionData];
-        setChatMessages((prevChatMessages) => ({
-          ...prevChatMessages,
-          [conn.peer]: [],
-        }));
-        forceUpdate();
+        console.log("Connection established with: " + conn.peer);
+        addSystemMessage("Connection established with: " + conn.peer)
       });
 
       conn.on("data", (data) => {
@@ -141,9 +122,9 @@ const App: React.FC = () => {
       });
 
       conn.on("close", () => {
-        console.log("Connection closed with: " + conn.peer);
         connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== conn.peer);
-        forceUpdate();
+        console.log("Connection closed with: " + conn.peer);
+        addSystemMessage("Connection closed with: " + conn.peer)
       });
     }
   };
@@ -152,13 +133,7 @@ const App: React.FC = () => {
     if (messageInput) {
       console.log("Sending message: " + messageInput);
       const chatMessage: ChatMessage = { peerId: myPeerId, message: messageInput };
-      setChatMessages((prevChatMessages) => {
-        const messages = prevChatMessages[myPeerId] || []; // Initialize the array if it doesn't exist
-        return {
-          ...prevChatMessages,
-          [myPeerId]: [...messages, chatMessage],
-        };
-      });
+      setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
       connectionsRef.current
         .filter((c) => c.peerId !== myPeerId)
         .forEach((c) => c.connection.send(messageInput));
@@ -225,14 +200,17 @@ const App: React.FC = () => {
     console.log("Resetting connection...");
     connectionsRef.current.forEach((c) => c.connection.close());
     connectionsRef.current = [];
-    setChatMessages({});
+    setChatLogs([]);
     forceUpdate();
   };
 
   console.log("RE RENDERING");
   console.log(connectionsRef.current);
+  console.log("chatlogs: ", chatLogs)
 
   const addSystemMessage = (message: string) => {
+    const chatMessage: ChatMessage = { peerId: "SYSTEM", message: message };
+    setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
   }
 
   const disconnectFromSelectedClient = (peerId: string) => {
@@ -246,19 +224,16 @@ const App: React.FC = () => {
     // removing unwanted peer from connections ref
     connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== peerId);
 
-    // showing log about disconnection
-    //addSystemMessage(`YOU DISCONNECTED FROM USER ${peerId}. YOU CAN STILL SEE THEIR PREVIOUS MESSAGES. ONLY YOU CAN SEE THIS SYSTEM MESSAGE.`)
-
     forceUpdate();
   }
 
   return (
-    <div>
+    <div className="App">
       <h1>Peer-to-Peer Chat</h1>
 
       {myPeerId && <h2>Your peer ID is: {myPeerId}</h2>}
 
-      {Object.keys(chatMessages).length > 0 ? (
+      {connectionsRef.current.length > 0 ? (
         <div>
           <h1>Connected to Peers:</h1>
           {connectionsRef.current.map((connection) => (
@@ -266,19 +241,8 @@ const App: React.FC = () => {
           ))}
           <br/>
 
-          <h2> Chat logs: </h2>
-          <div>
-            {Object.entries(chatMessages).map(([peerId, messages]) => (
-              <div key={peerId}>
-                <h3>Peer: {peerId} </h3>
-                {messages.map((chatMessage, index) => (
-                  <p key={index}>
-                    <b>{chatMessage.peerId.substring(0, 8)}</b>: {chatMessage.message}
-                  </p>
-                ))}
-              </div>
-            ))}
-          </div>
+          {ChatRenderer(chatLogs, myPeerId)}
+
           <input
             type="text"
             value={messageInput}
