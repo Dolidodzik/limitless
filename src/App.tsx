@@ -1,11 +1,10 @@
-import React, { useEffect, useState, ChangeEvent } from "react";
+import React, { useEffect, useState, ChangeEvent, useRef, useReducer } from "react";
 import Peer, { DataConnection } from "peerjs";
 
 let receivedChunks: Blob[] = [];
 
 const App: React.FC = () => {
   const [peer, setPeer] = useState<Peer | null>(null);
-  const [connection, setConnection] = useState<DataConnection | null>(null);
   const [chatMessages, setChatMessages] = useState<
     { peerId: string; message: string }[]
   >([]);
@@ -14,6 +13,11 @@ const App: React.FC = () => {
   const [progress, setProgress] = useState<number | null>(null);
   const [totalChunks, setTotalChunks] = useState(0);
   const [fileName, setFileName] = useState("");
+  const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void
+
+
+  const connectionRef = useRef<DataConnection | null>(null);
+
 
   useEffect(() => {
     const newPeer = new Peer();
@@ -29,23 +33,26 @@ const App: React.FC = () => {
 
       conn.on("open", () => {
         console.log("Connection established with: " + conn.peer);
-        setConnection(conn);
+        connectionRef.current = conn;
+        forceUpdate();
       });
 
       conn.on("data", (data) => {
+        console.log("FIRST DATA EVENT RECEIVE")
         handleReceivedData(data);
       });
 
       conn.on("close", () => {
         console.log("Connection closed with: " + conn.peer);
-        setConnection(null);
+        connectionRef.current = null;
       });
     });
 
     return () => {
-      if (connection) {
-        connection.close();
-        setConnection(null);
+      console.log("RETURN USEEFFECT CLEANUP")
+      if (connectionRef.current) {
+        connectionRef.current.close();
+        connectionRef.current = null;
       }
       newPeer.disconnect();
       newPeer.destroy();
@@ -84,11 +91,16 @@ const App: React.FC = () => {
         setFileName("");
       }
     } else {
+      console.log(connectionRef.current)
       console.log("Received message:", data);
-      setChatMessages((prevChatMessages) => [
-        ...prevChatMessages,
-        { peerId: connection!.peer, message: data },
-      ]);
+      if (connectionRef.current) {
+        setChatMessages((prevChatMessages) => [
+          ...prevChatMessages,
+          { peerId: connectionRef.current!.peer, message: data },
+        ]);
+      } else {
+        console.log("No active connection to receive message");
+      }
     }
   };
 
@@ -101,31 +113,35 @@ const App: React.FC = () => {
 
       conn.on("open", () => {
         console.log("Connection established with: " + conn.peer);
-        setConnection(conn);
+        connectionRef.current = conn;
+        forceUpdate()
       });
 
       conn.on("data", (data) => {
+        console.log("SECOND DATA EVENT RECEIVE")
         handleReceivedData(data);
       });
 
       conn.on("close", () => {
         console.log("Connection closed with: " + conn.peer);
-        setConnection(null);
+        connectionRef.current = null;
       });
     }
   };
 
   const sendMessage = () => {
-    if (connection && messageInput) {
+    if (connectionRef.current && messageInput) {
       console.log(
-        "Sending message: " + messageInput + " to " + connection.peer
+        "Sending message: " + messageInput + " to " + connectionRef.current.peer
       );
-      connection.send(messageInput);
+      connectionRef.current.send(messageInput);
       setChatMessages((prevChatMessages) => [
         ...prevChatMessages,
         { peerId: myPeerId, message: messageInput },
       ]);
       setMessageInput("");
+      console.log("MY CONNECTION:")
+      console.log(connectionRef.current)
     }
   };
 
@@ -153,7 +169,7 @@ const App: React.FC = () => {
         type: file.type,
       };
 
-      connection!.send(chunk);
+      connectionRef.current!.send(chunk);
 
       if (currentChunk < totalChunks - 1) {
         currentChunk++;
@@ -173,15 +189,16 @@ const App: React.FC = () => {
   };
 
   const resetConnection = () => {
-    if (connection) {
+    if (connectionRef.current) {
       console.log("Resetting connection...");
-      const peerId = connection.peer;
-      connection.close();
-      setConnection(null);
+      const peerId = connectionRef.current.peer;
+      connectionRef.current.close();
+      connectionRef.current = null;
     }
   };
 
   console.log("RE RENDERING");
+  console.log(connectionRef.current)
 
   return (
     <div>
@@ -189,13 +206,13 @@ const App: React.FC = () => {
 
       {myPeerId && <h2>Your peer ID is: {myPeerId}</h2>}
 
-      {connection ? (
+      {connectionRef.current ? (
         <div>
-          <h2>Connected to Peer: {connection.peer}</h2>
+          <h2>Connected to Peer: {connectionRef.current.peer}</h2>
           <div>
             {chatMessages.map((chatMessage, index) => (
               <p key={index}>
-                {chatMessage.peerId.substring(0, 8)}: {chatMessage.message}
+                <b> {chatMessage.peerId.substring(0, 8)} </b>: {chatMessage.message}
               </p>
             ))}
           </div>
