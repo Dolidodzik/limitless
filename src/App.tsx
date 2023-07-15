@@ -1,23 +1,30 @@
-import React, { useEffect, useState, ChangeEvent, useRef, useReducer } from "react";
+import React, { useEffect, useState, ChangeEvent, useRef } from "react";
 import Peer, { DataConnection } from "peerjs";
+
+interface ChatMessage {
+  peerId: string;
+  message: string;
+}
+
+interface ConnectionData {
+  connection: DataConnection;
+  peerId: string;
+}
 
 let receivedChunks: Blob[] = [];
 
 const App: React.FC = () => {
   const [peer, setPeer] = useState<Peer | null>(null);
-  const [chatMessages, setChatMessages] = useState<
-    { peerId: string; message: string }[]
-  >([]);
   const [messageInput, setMessageInput] = useState("");
   const [myPeerId, setMyPeerId] = useState("");
   const [progress, setProgress] = useState<number | null>(null);
   const [totalChunks, setTotalChunks] = useState(0);
-  const [fileName, setFileName] = useState("");
-  const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void
-
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 
   const connectionRef = useRef<DataConnection | null>(null);
-
+  const connectionsRef = useRef<ConnectionData[]>([]);
+  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
 
   useEffect(() => {
     const newPeer = new Peer();
@@ -33,33 +40,45 @@ const App: React.FC = () => {
 
       conn.on("open", () => {
         console.log("Connection established with: " + conn.peer);
-        connectionRef.current = conn;
+        const newConnectionData: ConnectionData = {
+          connection: conn,
+          peerId: conn.peer,
+        };
+        connectionsRef.current = [...connectionsRef.current, newConnectionData];
+        setChatMessages((prevChatMessages) => ({
+          ...prevChatMessages,
+          [conn.peer]: [],
+        }));
         forceUpdate();
       });
 
       conn.on("data", (data) => {
-        console.log("FIRST DATA EVENT RECEIVE")
-        handleReceivedData(data);
+        console.log("FIRST DATA EVENT RECEIVE");
+        handleReceivedData(data, conn.peer);
       });
 
       conn.on("close", () => {
         console.log("Connection closed with: " + conn.peer);
-        connectionRef.current = null;
+        connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== conn.peer);
+        setChatMessages((prevChatMessages) => {
+          const { [conn.peer]: _, ...updatedChatMessages } = prevChatMessages;
+          return updatedChatMessages;
+        });
+        forceUpdate();
       });
     });
 
     return () => {
-      console.log("RETURN USEEFFECT CLEANUP")
-      if (connectionRef.current) {
-        connectionRef.current.close();
-        connectionRef.current = null;
-      }
+      console.log("RETURN USEEFFECT CLEANUP");
+      connectionsRef.current.forEach((c) => c.connection.close());
+      connectionsRef.current = [];
+      setChatMessages({});
       newPeer.disconnect();
       newPeer.destroy();
     };
   }, []);
 
-  const handleReceivedData = (data: any) => {
+  const handleReceivedData = (data: any, senderPeerId: string) => {
     if (data.dataType === "FILE_CHUNK") {
       console.log("RECEIVED FILE_CHUNK", data);
       const { chunk, currentChunk, totalChunks, name, type } = data;
@@ -88,70 +107,82 @@ const App: React.FC = () => {
         URL.revokeObjectURL(downloadLink);
         receivedChunks = [];
         setTotalChunks(0);
-        setFileName("");
+        //setFileName("");
       }
     } else {
-      console.log(connectionRef.current)
       console.log("Received message:", data);
-      if (connectionRef.current) {
-        setChatMessages((prevChatMessages) => [
-          ...prevChatMessages,
-          { peerId: connectionRef.current!.peer, message: data },
-        ]);
-      } else {
-        console.log("No active connection to receive message");
-      }
+      const chatMessage: ChatMessage = { peerId: senderPeerId, message: data };
+      setChatMessages((prevChatMessages) => ({
+        ...prevChatMessages,
+        [senderPeerId]: [...prevChatMessages[senderPeerId], chatMessage],
+      }));
     }
   };
 
   const connectToPeer = () => {
-    const peerId = (document.getElementById("peerIdInput") as HTMLInputElement)
-      .value;
+    const peerId = (document.getElementById("peerIdInput") as HTMLInputElement).value;
     if (peer && peerId) {
       console.log("Initiating connection to: " + peerId);
       const conn = peer.connect(peerId);
 
       conn.on("open", () => {
         console.log("Connection established with: " + conn.peer);
-        connectionRef.current = conn;
-        forceUpdate()
+        const newConnectionData: ConnectionData = {
+          connection: conn,
+          peerId: conn.peer,
+        };
+        connectionsRef.current = [...connectionsRef.current, newConnectionData];
+        setChatMessages((prevChatMessages) => ({
+          ...prevChatMessages,
+          [conn.peer]: [],
+        }));
+        forceUpdate();
       });
 
       conn.on("data", (data) => {
-        console.log("SECOND DATA EVENT RECEIVE")
-        handleReceivedData(data);
+        console.log("SECOND DATA EVENT RECEIVE");
+        handleReceivedData(data, conn.peer);
       });
 
       conn.on("close", () => {
         console.log("Connection closed with: " + conn.peer);
-        connectionRef.current = null;
+        connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== conn.peer);
+        setChatMessages((prevChatMessages) => {
+          const { [conn.peer]: _, ...updatedChatMessages } = prevChatMessages;
+          return updatedChatMessages;
+        });
+        forceUpdate();
       });
     }
   };
 
   const sendMessage = () => {
-    if (connectionRef.current && messageInput) {
-      console.log(
-        "Sending message: " + messageInput + " to " + connectionRef.current.peer
-      );
-      connectionRef.current.send(messageInput);
-      setChatMessages((prevChatMessages) => [
-        ...prevChatMessages,
-        { peerId: myPeerId, message: messageInput },
-      ]);
+    if (messageInput) {
+      console.log("Sending message: " + messageInput);
+      const chatMessage: ChatMessage = { peerId: myPeerId, message: messageInput };
+      setChatMessages((prevChatMessages) => {
+        const messages = prevChatMessages[myPeerId] || []; // Initialize the array if it doesn't exist
+        return {
+          ...prevChatMessages,
+          [myPeerId]: [...messages, chatMessage],
+        };
+      });
+      connectionsRef.current
+        .filter((c) => c.peerId !== myPeerId)
+        .forEach((c) => c.connection.send(messageInput));
       setMessageInput("");
-      console.log("MY CONNECTION:")
-      console.log(connectionRef.current)
+      console.log("MY CONNECTIONS:");
+      console.log(connectionsRef.current);
     }
   };
 
-  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files![0];
+  const handleFileSubmit = () => {
+    if (!selectedFile) return;
+
     const chunkSize = 64 * 1024; // 64kB chunk size
-    const totalChunks = Math.ceil(file.size / chunkSize);
+    const totalChunks = Math.ceil(selectedFile.size / chunkSize);
 
     setTotalChunks(totalChunks);
-    setFileName(file.name);
 
     const reader = new FileReader();
     let currentChunk = 0;
@@ -165,11 +196,11 @@ const App: React.FC = () => {
         chunk: chunkData,
         currentChunk,
         totalChunks,
-        name: file.name,
-        type: file.type,
+        name: selectedFile.name,
+        type: selectedFile.type,
       };
 
-      connectionRef.current!.send(chunk);
+      connectionsRef.current.forEach((c) => c.connection.send(chunk));
 
       if (currentChunk < totalChunks - 1) {
         currentChunk++;
@@ -179,8 +210,8 @@ const App: React.FC = () => {
 
     const loadNextChunk = () => {
       const start = currentChunk * chunkSize;
-      const end = Math.min(start + chunkSize, file.size);
-      const chunk = file.slice(start, end);
+      const end = Math.min(start + chunkSize, selectedFile.size);
+      const chunk = selectedFile.slice(start, end);
 
       reader.readAsArrayBuffer(chunk);
     };
@@ -188,17 +219,26 @@ const App: React.FC = () => {
     loadNextChunk();
   };
 
-  const resetConnection = () => {
-    if (connectionRef.current) {
-      console.log("Resetting connection...");
-      const peerId = connectionRef.current.peer;
-      connectionRef.current.close();
-      connectionRef.current = null;
+  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files![0];
+    if (file) {
+      console.log("FILE WAS SELECTED", file);
+      setSelectedFile(file);
+    } else {
+      console.log("NO FILE WAS SELECTED");
     }
   };
 
+  const resetConnection = () => {
+    console.log("Resetting connection...");
+    connectionsRef.current.forEach((c) => c.connection.close());
+    connectionsRef.current = [];
+    setChatMessages({});
+    forceUpdate();
+  };
+
   console.log("RE RENDERING");
-  console.log(connectionRef.current)
+  console.log(connectionsRef.current);
 
   return (
     <div>
@@ -206,14 +246,19 @@ const App: React.FC = () => {
 
       {myPeerId && <h2>Your peer ID is: {myPeerId}</h2>}
 
-      {connectionRef.current ? (
+      {Object.keys(chatMessages).length > 0 ? (
         <div>
-          <h2>Connected to Peer: {connectionRef.current.peer}</h2>
+          <h2>Connected to Peers:</h2>
           <div>
-            {chatMessages.map((chatMessage, index) => (
-              <p key={index}>
-                <b> {chatMessage.peerId.substring(0, 8)} </b>: {chatMessage.message}
-              </p>
+            {Object.entries(chatMessages).map(([peerId, messages]) => (
+              <div key={peerId}>
+                <h3>Peer: {peerId}</h3>
+                {messages.map((chatMessage, index) => (
+                  <p key={index}>
+                    <b>{chatMessage.peerId.substring(0, 8)}</b>: {chatMessage.message}
+                  </p>
+                ))}
+              </div>
             ))}
           </div>
           <input
@@ -222,7 +267,15 @@ const App: React.FC = () => {
             onChange={(e) => setMessageInput(e.target.value)}
           />
           <button onClick={sendMessage}>Send</button>
+
+          <br />
+          <br />
+
           <input type="file" onChange={handleFileUpload} />
+          <button onClick={handleFileSubmit}>SEND SELECTED FILE!</button>
+
+          <br />
+          <br />
           <button onClick={resetConnection}>RESET CONNECTION</button>
         </div>
       ) : (
