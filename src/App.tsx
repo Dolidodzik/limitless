@@ -1,5 +1,6 @@
 import React, { useEffect, useState, ChangeEvent, useRef } from "react";
 import Peer, { DataConnection } from "peerjs";
+import { disconnect } from "process";
 
 interface ChatMessage {
   peerId: string;
@@ -22,7 +23,6 @@ const App: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 
-  const connectionRef = useRef<DataConnection | null>(null);
   const connectionsRef = useRef<ConnectionData[]>([]);
   const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
 
@@ -60,10 +60,6 @@ const App: React.FC = () => {
       conn.on("close", () => {
         console.log("Connection closed with: " + conn.peer);
         connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== conn.peer);
-        setChatMessages((prevChatMessages) => {
-          const { [conn.peer]: _, ...updatedChatMessages } = prevChatMessages;
-          return updatedChatMessages;
-        });
         forceUpdate();
       });
     });
@@ -147,10 +143,6 @@ const App: React.FC = () => {
       conn.on("close", () => {
         console.log("Connection closed with: " + conn.peer);
         connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== conn.peer);
-        setChatMessages((prevChatMessages) => {
-          const { [conn.peer]: _, ...updatedChatMessages } = prevChatMessages;
-          return updatedChatMessages;
-        });
         forceUpdate();
       });
     }
@@ -240,6 +232,26 @@ const App: React.FC = () => {
   console.log("RE RENDERING");
   console.log(connectionsRef.current);
 
+  const addSystemMessage = (message: string) => {
+  }
+
+  const disconnectFromSelectedClient = (peerId: string) => {
+    console.log("Connection closed with (BY BUTTON CLICK): " + peerId);
+    // closing connection with unwanted peer
+    connectionsRef.current.forEach((c) => {
+      if(c.peerId == peerId)
+        c.connection.close()
+    });
+    
+    // removing unwanted peer from connections ref
+    connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== peerId);
+
+    // showing log about disconnection
+    //addSystemMessage(`YOU DISCONNECTED FROM USER ${peerId}. YOU CAN STILL SEE THEIR PREVIOUS MESSAGES. ONLY YOU CAN SEE THIS SYSTEM MESSAGE.`)
+
+    forceUpdate();
+  }
+
   return (
     <div>
       <h1>Peer-to-Peer Chat</h1>
@@ -248,11 +260,17 @@ const App: React.FC = () => {
 
       {Object.keys(chatMessages).length > 0 ? (
         <div>
-          <h2>Connected to Peers:</h2>
+          <h1>Connected to Peers:</h1>
+          {connectionsRef.current.map((connection) => (
+            <div key={connection.peerId}> * {connection.peerId} <button onClick={() => disconnectFromSelectedClient(connection.peerId)}> disconnect </button> </div>
+          ))}
+          <br/>
+
+          <h2> Chat logs: </h2>
           <div>
             {Object.entries(chatMessages).map(([peerId, messages]) => (
               <div key={peerId}>
-                <h3>Peer: {peerId}</h3>
+                <h3>Peer: {peerId} </h3>
                 {messages.map((chatMessage, index) => (
                   <p key={index}>
                     <b>{chatMessage.peerId.substring(0, 8)}</b>: {chatMessage.message}
