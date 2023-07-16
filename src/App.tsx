@@ -1,7 +1,7 @@
 import React, { useEffect, useState, ChangeEvent, useRef } from "react";
 import Peer from "peerjs";
-import { ChatMessage, ConnectionData, FileInfoInterface } from './interfaces'
-import { ChatRenderer, generateRandomString, calculateTotalChunks, isJsonString } from './utils';
+import { ChatMessage, ConnectionData, userAccepts } from './interfaces'
+import { ChatRenderer, generateRandomString, calculateTotalChunks, isJsonString, sendChunksData } from './utils';
 import { FileInfo } from './classes';
 
 
@@ -12,18 +12,51 @@ const App: React.FC = () => {
   const [peer, setPeer] = useState<Peer | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [myPeerId, setMyPeerId] = useState("");
-  const [progress, setProgress] = useState<number | null>(null);
-  const [totalChunks, setTotalChunks] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-  const [outgoingFileTransfers, setOutgoingFileTransfers] = useState<FileInfo[]>([]);
-  const [incomingFileTransfers, setIncomingFileTransfers] = useState<FileInfo[]>([]);
-
 
   const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 
   const connectionsRef = useRef<ConnectionData[]>([]);
+  const outgoingFileTransfersRef = useRef<FileInfo[]>([]);
+  const incomingFileTransfersRef = useRef<FileInfo[]>([]);
+
   const [chatLogs, setChatLogs] = useState<ChatMessage[]>([]);
+
+  const setProgress = (transferID: string, progress: number) => {
+    if(progress > 100){
+      progress = 100;
+    }else if(progress < 0){
+      progress = 0;
+    }
+    
+    const transferIndex = outgoingFileTransfersRef.current.findIndex(
+      transfer => transfer.id === transferID
+    );
+    
+    if (transferIndex !== -1) {
+      outgoingFileTransfersRef.current[transferIndex].progress = progress;
+      console.log(`Progress of transfer with ID ${transferID} has been set to ${progress}.`);
+      forceUpdate()
+    } else {
+      console.log(`No transfer found with ID ${transferID}.`);
+    }
+  }
+
+  // if state was updated with removing non-accepting client, or with editing client that wasn't accepting, but he accepts now for any outgoing transfer, and now all clients for that transfer agree to receive, we can start sending.
+  outgoingFileTransfersRef.current.forEach((transfer, index: number) => {
+    if (transfer.receiverPeers.every(peer => peer.isAccepted) && transfer.progress === null) {
+      console.log("All receiverPeers have accepted this transfer:");
+      if(transfer.selectedFile){
+        console.log("SENDING CHUNKS")
+        sendChunksData(transfer.selectedFile, connectionsRef.current, transfer.id, setProgress)
+        outgoingFileTransfersRef.current[index].progress = 0;
+        forceUpdate()
+      }else{
+        console.log("BIG ERROR SELECTED FILE IS EMPTY, CANNOT SEND")
+      }
+    } 
+  });
+
 
   useEffect(() => {
     const newPeer = new Peer();
@@ -74,8 +107,9 @@ const App: React.FC = () => {
       console.log("NON EXISTING DATA WAS SENT")
       return;
     }
+    console.log("RECEIVED SOME DATA: ", data)
 
-    if (data.dataType === "FILE_CHUNK") {
+    if (data.dataType && data.dataType === "FILE_CHUNK") {
       console.log("RECEIVED FILE_CHUNK", data);
       const { chunk, currentChunk, totalChunks, name, type } = data;
       const chunkData = new Uint8Array(chunk);
@@ -83,15 +117,16 @@ const App: React.FC = () => {
 
       receivedChunks.push(fileChunk);
 
+      console.log("CHANGE RECEIVER PROGRESS...")
       if (receivedChunks.length % 5 === 0) {
-        setProgress((receivedChunks.length / totalChunks) * 100);
+        // TODO
+        //setProgress((receivedChunks.length / totalChunks) * 100);
       }
 
       console.log(receivedChunks);
 
       if (currentChunk === totalChunks - 1) {
         console.log("LAST_CHUNK_RECEIVED");
-        setProgress(100);
         const combinedFile = new Blob(receivedChunks, { type });
         const downloadLink = URL.createObjectURL(combinedFile);
 
@@ -102,9 +137,23 @@ const App: React.FC = () => {
 
         URL.revokeObjectURL(downloadLink);
         receivedChunks = [];
-        setTotalChunks(0);
         //setFileName("");
       }
+    } else if (data.dataType && data.dataType === "FILE_TRANSFER_ACCEPT" && data.id) {
+      console.log("FILE TRANSFER ACCEPT RECEIVED - OTHER PEER ACCEPTED THIS TRANSFER.");
+      const fileIndex = outgoingFileTransfersRef.current.findIndex(file => file.id === data.id);
+      const fileToUpdate = outgoingFileTransfersRef.current[fileIndex];
+      const updatedFile = { ...fileToUpdate };
+  
+      // Edit the properties of the copied object
+      console.log(updatedFile)
+      console.log(outgoingFileTransfersRef.current)
+      const i = updatedFile.receiverPeers.findIndex((user) => user.id === senderPeerId);
+      updatedFile.receiverPeers[i].isAccepted = true;
+  
+      // Update the state with the modified object
+      outgoingFileTransfersRef.current[fileIndex] = updatedFile;
+      forceUpdate();
     } else if (isJsonString(data)) {
       data = JSON.parse(data);
       if(data && data.totalChunks && data.size){ // checking if data is valid offer, or at least looks like it
@@ -114,11 +163,12 @@ const App: React.FC = () => {
           data.size,
           data.totalChunks,
           data.id,
-          data.type,
-          data.isAccepted
+          data.type
         );
-        incomingOffer.setPeerIDs(senderPeerId, [myPeerId])
-        setIncomingFileTransfers((prevTransfers) => [...prevTransfers, incomingOffer]);
+        incomingOffer.setPeerIDs(senderPeerId, [{id: myPeerId, isAccepted: false}])
+        console.log("got this offer: ", incomingOffer);
+        incomingFileTransfersRef.current = [...incomingFileTransfersRef.current, incomingOffer];
+        forceUpdate();
       }else{
         console.log("WRONG JSON STRING RECEIVED ", data)
       }
@@ -173,52 +223,6 @@ const App: React.FC = () => {
     }
   };
 
-  const sendChunksData = () => {
-
-    if (!selectedFile){
-      console.log("NO FILE SELECTED PLEASE SELECT FILE");
-      return;
-    } 
-
-    const totalChunks = calculateTotalChunks(selectedFile.size, chunkSize)
-
-    setTotalChunks(totalChunks);
-
-    const reader = new FileReader();
-    let currentChunk = 0;
-
-    reader.onload = () => {
-      const arrayBuffer = reader.result as ArrayBuffer;
-      const chunkData = new Uint8Array(arrayBuffer);
-
-      const chunk = {
-        dataType: "FILE_CHUNK",
-        chunk: chunkData,
-        currentChunk,
-        totalChunks,
-        name: selectedFile.name,
-        type: selectedFile.type,
-      };
-
-      connectionsRef.current.forEach((c) => c.connection.send(chunk));
-
-      if (currentChunk < totalChunks - 1) {
-        currentChunk++;
-        loadNextChunk();
-      }
-    };
-
-    const loadNextChunk = () => {
-      const start = currentChunk * chunkSize;
-      const end = Math.min(start + chunkSize, selectedFile.size);
-      const chunk = selectedFile.slice(start, end);
-
-      reader.readAsArrayBuffer(chunk);
-    };
-
-    loadNextChunk();
-  };
-
   const handleFileSubmit = () => {
     if (!selectedFile){
       console.log("NO FILE SELECTED PLEASE SELECT FILE");
@@ -231,17 +235,18 @@ const App: React.FC = () => {
       calculateTotalChunks(selectedFile.size, chunkSize),
       generateRandomString(32),
       selectedFile.type,
-      false
+      selectedFile
     )
     
     console.log("sending this offer to all connected clients: ", outgoingTransferOffer);
     connectionsRef.current.forEach((c) => {c.connection.send(JSON.stringify(outgoingTransferOffer))});
     
     // when connection is already sent, we edit it for this client only and assign correct peer ids
-    const connectedPeerIDs = connectionsRef.current.map(c => c.peerId);
+    const connectedPeerIDs: userAccepts[] = connectionsRef.current.map(c => ({ id: c.peerId, isAccepted: false }));
+    
     outgoingTransferOffer.setPeerIDs(myPeerId, connectedPeerIDs);
-    setOutgoingFileTransfers((prevTransfers) => [...prevTransfers, outgoingTransferOffer]);
-
+    outgoingFileTransfersRef.current = [...outgoingFileTransfersRef.current, outgoingTransferOffer];
+    forceUpdate();
   }
 
   const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
@@ -265,8 +270,8 @@ const App: React.FC = () => {
   console.log("RE RENDERING");
   console.log(connectionsRef.current);
   console.log("chatlogs: ", chatLogs)
-  console.log("outcoming transfers: ", outgoingFileTransfers);
-  console.log("incoming transfers: ", incomingFileTransfers)
+  console.log("outcoming transfers: ", outgoingFileTransfersRef.current);
+  console.log("incoming transfers: ", incomingFileTransfersRef.current)
 
   const addSystemMessage = (message: string) => {
     const chatMessage: ChatMessage = { peerId: "SYSTEM", message: message };
@@ -277,13 +282,35 @@ const App: React.FC = () => {
     console.log("Connection closed with (BY BUTTON CLICK): " + peerId);
     // closing connection with unwanted peer
     connectionsRef.current.forEach((c) => {
-      if(c.peerId == peerId)
+      if(c.peerId === peerId)
         c.connection.close()
     });
     
     // removing unwanted peer from connections ref
     connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== peerId);
 
+    forceUpdate();
+  }
+
+  const acceptTransfer = (id: string) => {
+    const fileIndex = incomingFileTransfersRef.current.findIndex(file => file.id === id);
+    const fileToUpdate = incomingFileTransfersRef.current[fileIndex];
+    const updatedFile = { ...fileToUpdate };
+
+    // Edit the properties of the copied object
+    updatedFile.receiverPeers[0].isAccepted = true;
+
+    // letting sender know that we will accept his transfer for this file
+    const info = {
+      dataType: "FILE_TRANSFER_ACCEPT",
+      id: updatedFile.id 
+    }
+
+    connectionsRef.current
+    .filter((c) => c.peerId === updatedFile.senderPeerID)
+    .forEach((c) => c.connection.send(info));
+
+    incomingFileTransfersRef.current[fileIndex] = updatedFile;
     forceUpdate();
   }
 
@@ -315,20 +342,31 @@ const App: React.FC = () => {
           <h2> File transfers: </h2>
           <br/>
           <h3>  Incoming: </h3>
-          {incomingFileTransfers.map((transfer) => (
-            <div key={transfer.id}> 
+          {incomingFileTransfersRef.current.map((transfer) => (
+            <div key={transfer.id} className="box"> 
               * <b>{transfer.id}</b> from <b>{transfer.senderPeerID}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks.
               <br/>
-              isAccepted: {transfer.isAccepted.toString()}
+              {transfer.receiverPeers[0].isAccepted ? (
+                <span> You already accepted this transfer. </span>
+              ) : (
+                <span> You didn't accept this transfer. <button onClick={() => acceptTransfer(transfer.id)}> accept </button> </span>
+              )}
             </div>
           ))}
 
           <h3>  Outgoing: </h3>
-          {outgoingFileTransfers.map((transfer) => (
-            <div key={transfer.id}> 
-              * <b>{transfer.id}</b> to <b>{transfer.receiverPeerIDs}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks.
+          {outgoingFileTransfersRef.current.map((transfer) => (
+            <div key={transfer.id} className="box"> 
+              * <b>{transfer.id}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks. <br/> 
+              <b> Progress: {transfer.progress} </b> <br/> 
+              To peers:
+              {transfer.receiverPeers.map((receiver) => (
+                <div key={receiver.id}> 
+                  * {receiver.id}, accepted: {receiver.isAccepted}.
+                </div>
+              ))}
               <br/>
-              isAccepted: {transfer.isAccepted.toString()}
+
             </div>
           ))}
           

@@ -16,10 +16,10 @@ export interface FileInfoInterface {
   totalChunks: number,
   id: string,
   type: string,
-  isAccepted: boolean,
   progress: number | null, 
 }
 
-export function isFileInfoObject(obj: any): obj is FileInfoInterface {
-  return obj.type === 'fileInfo';
+export interface userAccepts {
+  id: string,
+  isAccepted: boolean,
 }
