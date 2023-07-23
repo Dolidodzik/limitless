@@ -64,12 +64,13 @@ export const sendChunksData = (file: File, connections: ConnectionData[], transf
       totalChunks,
       name: file.name,
       type: file.type,
+      transferID: transferID
     };
 
     connections.forEach((c) => c.connection.send(chunk));
 
     if (currentChunk % 5 === 0) {
-      setProgress(transferID, (currentChunk / totalChunks) * 100);
+      setProgress(transferID, Math.floor((currentChunk / totalChunks) * 100 * 100) / 100); // * 100 because progress is like this 0.50 means 50%, so to get % value instead of fraction we need * 100. Then *100 and /100, because we are rounding up to 2 decimal places. Rounding down with Math.floor, so it will never be 100, to make 100 we will need to do it explicitly.
     }
 
     if (currentChunk < totalChunks - 1) {

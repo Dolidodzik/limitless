@@ -3,9 +3,10 @@ import Peer from "peerjs";
 import { ChatMessage, ConnectionData, userAccepts } from './interfaces'
 import { ChatRenderer, generateRandomString, calculateTotalChunks, isJsonString, sendChunksData } from './utils';
 import { FileInfo } from './classes';
+import { blobDict } from './types';
 
 
-let receivedChunks: Blob[] = [];
+let receivedChunks: blobDict = {};
 const chunkSize = 64 * 1024; // 64kB chunk size
 
 const App: React.FC = () => {
@@ -111,23 +112,50 @@ const App: React.FC = () => {
 
     if (data.dataType && data.dataType === "FILE_CHUNK") {
       console.log("RECEIVED FILE_CHUNK", data);
-      const { chunk, currentChunk, totalChunks, name, type } = data;
+      const { chunk, currentChunk, totalChunks, name, type, transferID } = data;
       const chunkData = new Uint8Array(chunk);
       const fileChunk = new Blob([chunkData], { type });
 
-      receivedChunks.push(fileChunk);
+      // if there isn't transfer with that ID in blob list, then add it
 
-      console.log("CHANGE RECEIVER PROGRESS...")
-      if (receivedChunks.length % 5 === 0) {
-        // TODO
-        //setProgress((receivedChunks.length / totalChunks) * 100);
+      console.log("IMPORTANT UWUWUWUWUWUWU", transferID)
+
+      if(!receivedChunks[transferID])
+        receivedChunks[transferID] = [];
+      
+      receivedChunks[transferID].push(fileChunk)
+
+
+      if (receivedChunks[transferID].length % 20 === 0) {
+        console.log("CHANGE RECEIVER PROGRESS...")
+        console.log("CHANGE RECEIVER PROGRESS...")
+        console.log("CHANGE RECEIVER PROGRESS...")
+        let progress = Math.floor((receivedChunks[transferID].length / totalChunks) * 100 * 100) / 100;
+        if(progress >= 100){
+          progress = 99.99; // we don't set 100 here, if that would be the case for whatever reason. We set 100% only when we combined file and nothing crashed.
+        }else if(progress < 0){
+          progress = 0;
+        }
+        
+        const transferIndex = incomingFileTransfersRef.current.findIndex(
+          transfer => transfer.id === transferID
+        );
+        
+        if (transferIndex !== -1) {
+          incomingFileTransfersRef.current[transferIndex].progress = progress;
+          console.log(`receiver progress of transfer with ID ${transferID} has been set to ${transferID}.`);
+          forceUpdate()
+        } else {
+          console.log(`No reciver transfer found with ID ${transferID}.`);
+        }
       }
 
-      console.log(receivedChunks);
+
+      console.log("recived chunks up to this point: ", receivedChunks);
 
       if (currentChunk === totalChunks - 1) {
         console.log("LAST_CHUNK_RECEIVED");
-        const combinedFile = new Blob(receivedChunks, { type });
+        const combinedFile = new Blob(receivedChunks[transferID], { type });
         const downloadLink = URL.createObjectURL(combinedFile);
 
         const anchorElement = document.createElement("a");
@@ -136,8 +164,14 @@ const App: React.FC = () => {
         anchorElement.click();
 
         URL.revokeObjectURL(downloadLink);
-        receivedChunks = [];
-        //setFileName("");
+        receivedChunks[transferID] = [];
+
+        // set progress to 100
+        const transferIndex = incomingFileTransfersRef.current.findIndex(
+          transfer => transfer.id === transferID
+        );
+        incomingFileTransfersRef.current[transferIndex].progress = 100;
+        forceUpdate()
       }
     } else if (data.dataType && data.dataType === "FILE_TRANSFER_ACCEPT" && data.id) {
       console.log("FILE TRANSFER ACCEPT RECEIVED - OTHER PEER ACCEPTED THIS TRANSFER.");
@@ -268,9 +302,6 @@ const App: React.FC = () => {
   };
 
   console.log("RE RENDERING");
-  console.log(connectionsRef.current);
-  console.log("chatlogs: ", chatLogs)
-  console.log("outcoming transfers: ", outgoingFileTransfersRef.current);
   console.log("incoming transfers: ", incomingFileTransfersRef.current)
 
   const addSystemMessage = (message: string) => {
@@ -347,7 +378,14 @@ const App: React.FC = () => {
               * <b>{transfer.id}</b> from <b>{transfer.senderPeerID}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks.
               <br/>
               {transfer.receiverPeers[0].isAccepted ? (
-                <span> You already accepted this transfer. </span>
+                <span> 
+                  You already accepted this transfer.
+                  {transfer.progress == null ? 
+                    <span> Sender haven't started sending yet. </span>
+                    : 
+                    <span> Progress: {transfer.progress} </span>
+                  }
+                </span>
               ) : (
                 <span> You didn't accept this transfer. <button onClick={() => acceptTransfer(transfer.id)}> accept </button> </span>
               )}
@@ -362,7 +400,7 @@ const App: React.FC = () => {
               To peers:
               {transfer.receiverPeers.map((receiver) => (
                 <div key={receiver.id}> 
-                  * {receiver.id}, accepted: {receiver.isAccepted}.
+                  * {receiver.id}, accepted: {receiver.isAccepted.toString()}.
                 </div>
               ))}
               <br/>

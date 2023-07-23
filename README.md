@@ -22,3 +22,5 @@ pausing breaking etc edge cases connection during upload or not, during offer se
       }
 Dealing with offers JSON stringing etc in a better way
 Id vs id vs ID
+better ways of checking what transfer chunks are being received maybe? but what we have now is fine ig
+math progress validation to utils
