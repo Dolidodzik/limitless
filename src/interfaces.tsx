@@ -22,4 +22,11 @@ export interface FileInfoInterface {
 export interface userAccepts {
   id: string,
   isAccepted: boolean,
+  progress: number | null
+}
+
+export interface progressUpdateMessage {
+  dataType: string,
+  transferID: string,
+  progress: number
 }

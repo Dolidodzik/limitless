@@ -1,7 +1,7 @@
 // FOR NOW I WILL KEEP HERE ALL STUFF THAT IS EASILY SEPARATABLE FROM APP.TSX, LATER THERE WILL BE MORE SPLITING DONE
 
 import React from 'react';
-import { ChatMessage, ConnectionData } from './interfaces';
+import { ChatMessage, ConnectionData, progressUpdateMessage } from './interfaces';
 
 export function ChatRenderer(chatLogs: ChatMessage[], ownId: string) {
     return (
@@ -92,3 +92,16 @@ export const sendChunksData = (file: File, connections: ConnectionData[], transf
 
   loadNextChunk();
 };
+
+export function sendProgressUpdateMessage(progress: number, senderPeerId: string, transferID: string, connectionsRef: ConnectionData[]){
+  
+  const progressUpdate: progressUpdateMessage = {
+    progress: progress,
+    transferID: transferID,
+    dataType: "TRANSFER_PROGRESS_UPDATE"
+  }
+
+  connectionsRef
+  .filter((c) => c.peerId === senderPeerId)
+  .forEach((c) => c.connection.send(progressUpdate));
+}

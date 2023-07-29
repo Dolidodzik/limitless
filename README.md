@@ -24,3 +24,16 @@ Dealing with offers JSON stringing etc in a better way
 Id vs id vs ID
 better ways of checking what transfer chunks are being received maybe? but what we have now is fine ig
 math progress validation to utils
+major issue z z kolejnoscia chunkow, czasem po wireless networku pliki sa corrupted w huj:
+
+[lesiu@nobara-pc lissandra_comparison]$ sha512sum chromium.mkv 
+be9b1df3feb7f3af8a9649f2bbf481241f194c8b6e6e28572e8b6b25c3e6e91e22b68d6d20b02a4d198623faec6359baccc07801fb0e8979bc862253bdd0a743  chromium.mkv
+[lesiu@nobara-pc lissandra_comparison]$ sha512sum firefox.mkv 
+50549d39fc68e62121dec23ce62a5b5bf3396f1b0bf1693d46c52c5817cf2490faa348eeabbd8562641120f13424e3d96c15e04dc12d42c069115d2ddb9a8ff8  firefox.mkv
+[lesiu@nobara-pc lissandra_comparison]$ du firefox.mkv 
+46520	firefox.mkv
+[lesiu@nobara-pc lissandra_comparison]$ du chromium.mkv 
+46520	chromium.mkv
+[lesiu@nobara-pc lissandra_comparison]$ 
+
+ten sam plik byl rownolegle pobierany do obu przegladarek i sie zjebalo ewidentnie. issue nie zaobserwowalem po kablu, wiec to pewnie kwestia pingu / traconych pakietow. do obadania.
