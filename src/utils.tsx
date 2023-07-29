@@ -42,7 +42,7 @@ export function isJsonString(str: string): boolean {
   return true;
 }
 
-export const sendChunksData = (file: File, connections: ConnectionData[], transferID: string, setProgress: Function, chunkSize: number = 64 * 1024) => {
+export const sendChunksData = (file: File, connectionData: ConnectionData, transferID: string, setProgress: Function, chunkSize: number = 64 * 1024) => {
 
   if (!file){
     console.log("NO FILE SELECTED??? BIG ERROR SOMETHING WENT WRONG.");
@@ -67,7 +67,7 @@ export const sendChunksData = (file: File, connections: ConnectionData[], transf
       transferID: transferID
     };
 
-    connections.forEach((c) => c.connection.send(chunk));
+    connectionData.connection.send(chunk);
 
     if (currentChunk % 5 === 0) {
       setProgress(transferID, Math.floor((currentChunk / totalChunks) * 100 * 100) / 100); // * 100 because progress is like this 0.50 means 50%, so to get % value instead of fraction we need * 100. Then *100 and /100, because we are rounding up to 2 decimal places. Rounding down with Math.floor, so it will never be 100, to make 100 we will need to do it explicitly.

@@ -37,3 +37,5 @@ be9b1df3feb7f3af8a9649f2bbf481241f194c8b6e6e28572e8b6b25c3e6e91e22b68d6d20b02a4d
 [lesiu@nobara-pc lissandra_comparison]$ 
 
 ten sam plik byl rownolegle pobierany do obu przegladarek i sie zjebalo ewidentnie. issue nie zaobserwowalem po kablu, wiec to pewnie kwestia pingu / traconych pakietow. do obadania.
+
+ACTUAL VALIDATION WHAT FILE WE ARE RECEIVING, IF FILE IS 10MB, WE SHOULDNT MORE CHUNKS THAN 10MB DOES IT MAKE SENSE. THINK ABOUT OTHER WAYS MALICIOUS ACTORS COULD TRY TO EXPLOIT PEER 2 PEER CONNECTION, THINK ABOUT USERS SAFETY

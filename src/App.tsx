@@ -46,21 +46,6 @@ const App: React.FC = () => {
     }
   }
 
-  // if state was updated with removing non-accepting client, or with editing client that wasn't accepting, but he accepts now for any outgoing transfer, and now all clients for that transfer agree to receive, we can start sending.
-  outgoingFileTransfersRef.current.forEach((transfer, index: number) => {
-    if (transfer.receiverPeers.every(peer => peer.isAccepted) && transfer.progress === null) {
-      console.log("All receiverPeers have accepted this transfer:");
-      if(transfer.selectedFile){
-        console.log("SENDING CHUNKS")
-        sendChunksData(transfer.selectedFile, connectionsRef.current, transfer.id, setProgress)
-        outgoingFileTransfersRef.current[index].progress = 0;
-        forceUpdate()
-      }else{
-        console.log("BIG ERROR SELECTED FILE IS EMPTY, CANNOT SEND")
-      }
-    } 
-  });
-
 
   useEffect(() => {
     const newPeer = new Peer();
@@ -223,6 +208,19 @@ const App: React.FC = () => {
   
       // Update the state with the modified object
       outgoingFileTransfersRef.current[fileIndex] = updatedFile;
+
+      // chunks go wrrrrrrrr (actual file transfer starts)
+      const connectionData = connectionsRef.current.find((connectionData) => connectionData.peerId === senderPeerId);
+
+      if(updatedFile.selectedFile && connectionData){
+        console.log("SENDING CHUNKS")
+        sendChunksData(updatedFile.selectedFile, connectionData, updatedFile.id, setProgress)
+        outgoingFileTransfersRef.current[fileIndex].progress = 0;
+        forceUpdate()
+      }else{
+        console.log("BIG ERROR SELECTED FILE IS EMPTY, CANNOT SEND OR CONNECTION DATA IS EMPTY FOR SOME REASON")
+      }
+
       forceUpdate();
     } else if (isJsonString(data)) {
       data = JSON.parse(data);
