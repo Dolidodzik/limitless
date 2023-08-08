@@ -1,3 +1,3 @@
 export type blobDict = {
-    [key: string]: Blob[];
-};
+    [key: string]: { chunks: { blob: Blob; chunkOrder: number }[] };
+  };

@@ -20,12 +20,15 @@ pausing breaking etc edge cases connection during upload or not, during offer se
       }else{
         console.log("WRONG JSON STRING RECEIVED ", data)
       }
+
+
 Dealing with offers JSON stringing etc in a better way
 Id vs id vs ID
 better ways of checking what transfer chunks are being received maybe? but what we have now is fine ig
 math progress validation to utils
-major issue z z kolejnoscia chunkow, czasem po wireless networku pliki sa corrupted w huj:
 
+======================
+major issue z z kolejnoscia chunkow, czasem po wireless networku pliki sa corrupted w huj:
 [lesiu@nobara-pc lissandra_comparison]$ sha512sum chromium.mkv 
 be9b1df3feb7f3af8a9649f2bbf481241f194c8b6e6e28572e8b6b25c3e6e91e22b68d6d20b02a4d198623faec6359baccc07801fb0e8979bc862253bdd0a743  chromium.mkv
 [lesiu@nobara-pc lissandra_comparison]$ sha512sum firefox.mkv 
@@ -37,5 +40,8 @@ be9b1df3feb7f3af8a9649f2bbf481241f194c8b6e6e28572e8b6b25c3e6e91e22b68d6d20b02a4d
 [lesiu@nobara-pc lissandra_comparison]$ 
 
 ten sam plik byl rownolegle pobierany do obu przegladarek i sie zjebalo ewidentnie. issue nie zaobserwowalem po kablu, wiec to pewnie kwestia pingu / traconych pakietow. do obadania.
+======================
 
 ACTUAL VALIDATION WHAT FILE WE ARE RECEIVING, IF FILE IS 10MB, WE SHOULDNT MORE CHUNKS THAN 10MB DOES IT MAKE SENSE. THINK ABOUT OTHER WAYS MALICIOUS ACTORS COULD TRY TO EXPLOIT PEER 2 PEER CONNECTION, THINK ABOUT USERS SAFETY
+
+BUTTON FOR DECLINING TRANSFER

@@ -100,7 +100,7 @@ const App: React.FC = () => {
 
     if (data.dataType && data.dataType === "FILE_CHUNK") {
       console.log("RECEIVED FILE_CHUNK", data);
-      const { chunk, currentChunk, totalChunks, name, type, transferID } = data;
+      const { chunk, currentChunk, totalChunks, name, type, transferID, chunkOrder } = data;
       const chunkData = new Uint8Array(chunk);
       const fileChunk = new Blob([chunkData], { type });
 
@@ -108,17 +108,23 @@ const App: React.FC = () => {
 
       console.log("IMPORTANT UWUWUWUWUWUWU", transferID)
 
-      if(!receivedChunks[transferID])
-        receivedChunks[transferID] = [];
+      if (!receivedChunks[transferID]) {
+        receivedChunks[transferID] = {
+          chunks: [],
+        };
+      }
       
-      receivedChunks[transferID].push(fileChunk)
+      receivedChunks[transferID].chunks.push({
+        blob: fileChunk,
+        chunkOrder: chunkOrder,
+      });
 
 
-      if (receivedChunks[transferID].length % 10 === 0) {
+      if (receivedChunks[transferID].chunks.length % 10 === 0) {
         console.log("CHANGE RECEIVER PROGRESS...")
         console.log("CHANGE RECEIVER PROGRESS...")
         console.log("CHANGE RECEIVER PROGRESS...")
-        let progress = Math.floor((receivedChunks[transferID].length / totalChunks) * 100 * 100) / 100;
+        let progress = Math.floor((receivedChunks[transferID].chunks.length / totalChunks) * 100 * 100) / 100;
         if(progress >= 100){
           progress = 99.99; // we don't set 100 here, if that would be the case for whatever reason. We set 100% only when we combined file and nothing crashed.
         }else if(progress < 0){
@@ -152,33 +158,49 @@ const App: React.FC = () => {
 
       if (currentChunk === totalChunks - 1) {
         console.log("LAST_CHUNK_RECEIVED");
-        const combinedFile = new Blob(receivedChunks[transferID], { type });
+      
+        // Sort the received chunks by chunkOrder
+        console.log("SORTING SHIT...")
+        const beforeSorting = receivedChunks
+        receivedChunks[transferID].chunks.sort((a, b) => a.chunkOrder - b.chunkOrder);
+        console.log("DONE")
+        if(beforeSorting == receivedChunks){
+          console.log("before sorting chunks they were fine")
+        }else{
+          console.log("before sorting chunks had order issue")
+        }
+      
+        const combinedChunks = receivedChunks[transferID].chunks.map(chunkInfo => chunkInfo.blob);
+        const combinedFile = new Blob(combinedChunks, { type });
+      
         const downloadLink = URL.createObjectURL(combinedFile);
-
+      
         const anchorElement = document.createElement("a");
         anchorElement.href = downloadLink;
         anchorElement.download = name;
         anchorElement.click();
-
+      
         URL.revokeObjectURL(downloadLink);
-        receivedChunks[transferID] = [];
-
-        // letting know uploader how download progress is going
+      
+        // letting the uploader know how download progress is going
         sendProgressUpdateMessage(
           100,
           senderPeerId,
           transferID,
           connectionsRef.current
         );
-        console.log("called sendprogresupdatemessage with ", senderPeerId, transferID, connectionsRef.current)
-
+        console.log("called sendprogresupdatemessage with ", senderPeerId, transferID, connectionsRef.current);
+      
         // set progress to 100
         const transferIndex = incomingFileTransfersRef.current.findIndex(
           transfer => transfer.id === transferID
         );
         incomingFileTransfersRef.current[transferIndex].progress = 100;
-        forceUpdate()
-      }
+        forceUpdate();
+      
+        // Clear chunks for this transfer
+        receivedChunks[transferID].chunks = [];
+      }      
     } else if (data.dataType == "TRANSFER_PROGRESS_UPDATE") {
 
       console.log("RECEIVED TRANSFER_PROGRESS_UPDATE ", data)

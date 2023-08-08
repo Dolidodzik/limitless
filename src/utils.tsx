@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ChatMessage, ConnectionData, progressUpdateMessage } from './interfaces';
+import { blobDict } from './types';
 
 export function ChatRenderer(chatLogs: ChatMessage[], ownId: string) {
     return (
@@ -64,7 +65,8 @@ export const sendChunksData = (file: File, connectionData: ConnectionData, trans
       totalChunks,
       name: file.name,
       type: file.type,
-      transferID: transferID
+      transferID: transferID,
+      chunkOrder: currentChunk
     };
 
     connectionData.connection.send(chunk);
