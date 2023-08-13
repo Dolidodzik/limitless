@@ -431,6 +431,12 @@ const App: React.FC = () => {
     });
   };
 
+  const acceptAllFiles = () => {
+    incomingFileTransfersRef.current.forEach(transfer => {
+      acceptTransfer(transfer.id)
+    });
+  }
+
 
   return (
     <div className="App">
@@ -518,6 +524,7 @@ const App: React.FC = () => {
           }
 
           <br />
+          <button onClick={acceptAllFiles}>PRESS TO ACCEPT ALL FILE TRANSFERS. ONLY CLICK IF YOU TRUST EVERYONE IN THIS ROOM.</button>
           <br />
           <button onClick={resetConnection}>RESET CONNECTION</button>
         </div>
