@@ -329,8 +329,16 @@ const App: React.FC = () => {
     )
     
     console.log("sending this offer to all connected clients: ", outgoingTransferOffer);
-    connectionsRef.current.forEach((c) => {c.connection.send(JSON.stringify(outgoingTransferOffer))});
+    //connectionsRef.current.forEach((c) => {});
     
+    // sending data only to selected peers
+    connectionsRef.current.forEach((c) => {
+      if(targetPeers.includes(c.peerId)){
+        c.connection.send(JSON.stringify(outgoingTransferOffer))
+      }
+    });
+
+
     // when connection is already sent, we edit it for this client only and assign correct peer ids
     const connectedPeerIDs: userAccepts[] = connectionsRef.current.map(c => ({ id: c.peerId, isAccepted: false, progress: null }));
     
