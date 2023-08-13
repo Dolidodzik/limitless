@@ -21,6 +21,7 @@ pausing breaking etc edge cases connection during upload or not, during offer se
         console.log("WRONG JSON STRING RECEIVED ", data)
       }
 
+MOVE generateRandomString to class constructor
 
 Dealing with offers JSON stringing etc in a better way
 Id vs id vs ID

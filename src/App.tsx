@@ -13,7 +13,7 @@ const App: React.FC = () => {
   const [peer, setPeer] = useState<Peer | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [myPeerId, setMyPeerId] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   // IDs of peers user chose to send file to
   const [targetPeers, setTargetPeers] = useState<string[]>([]);
@@ -314,47 +314,53 @@ const App: React.FC = () => {
   };
 
   const handleFileSubmit = () => {
-    if (!selectedFile){
+    if (selectedFiles.length == 0){
       console.log("NO FILE SELECTED PLEASE SELECT FILE");
       return;
     } 
 
-    let outgoingTransferOffer = new FileInfo(
-      selectedFile.name,
-      selectedFile.size,
-      calculateTotalChunks(selectedFile.size, chunkSize),
-      generateRandomString(32),
-      selectedFile.type,
-      selectedFile
-    )
-    
-    console.log("sending this offer to all connected clients: ", outgoingTransferOffer);
-    //connectionsRef.current.forEach((c) => {});
-    
-    // sending data only to selected peers
-    connectionsRef.current.forEach((c) => {
-      if(targetPeers.includes(c.peerId)){
-        c.connection.send(JSON.stringify(outgoingTransferOffer))
-      }
+    console.log('selected files', selectedFiles)
+
+    selectedFiles.forEach((file) => {
+      console.log("file", file)
+      let outgoingTransferOffer = new FileInfo(
+        file.name,
+        file.size,
+        calculateTotalChunks(file.size, chunkSize),
+        generateRandomString(32),
+        file.type,
+        file
+      )
+      
+      console.log("sending this offer to all connected clients: ", outgoingTransferOffer);
+      
+      // sending data only to selected peers
+      connectionsRef.current.forEach((c) => {
+        if(targetPeers.includes(c.peerId)){
+          c.connection.send(JSON.stringify(outgoingTransferOffer))
+        }
+      });
+  
+      // when connection is already sent, we edit it for this client only and assign correct peer ids
+      const connectedPeerIDs: userAccepts[] = connectionsRef.current.map(c => ({ id: c.peerId, isAccepted: false, progress: null }));
+      
+      outgoingTransferOffer.setPeerIDs(myPeerId, connectedPeerIDs);
+      outgoingFileTransfersRef.current = [...outgoingFileTransfersRef.current, outgoingTransferOffer];
+      forceUpdate();
     });
-
-
-    // when connection is already sent, we edit it for this client only and assign correct peer ids
-    const connectedPeerIDs: userAccepts[] = connectionsRef.current.map(c => ({ id: c.peerId, isAccepted: false, progress: null }));
-    
-    outgoingTransferOffer.setPeerIDs(myPeerId, connectedPeerIDs);
-    outgoingFileTransfersRef.current = [...outgoingFileTransfersRef.current, outgoingTransferOffer];
-    forceUpdate();
   }
 
   const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files![0];
-    if (file) {
-      console.log("FILE WAS SELECTED", file);
-      setSelectedFile(file);
-    } else {
-      console.log("NO FILE WAS SELECTED");
+    console.log("FILES WERE SELECTED", event.target.files);
+    const newFiles = Array.from(event.target.files || []);
+
+    if (newFiles.length === 0) {
+      console.warn("WARNING! No files selected.");
+    } else if (newFiles.length > 1) {
+      console.warn("WARNING! Selecting multiple files. All selections will be kept.");
     }
+  
+    setSelectedFiles(newFiles);
   };
 
   const resetConnection = () => {
@@ -366,8 +372,8 @@ const App: React.FC = () => {
   };
 
   console.log("RE RENDERING");
-  console.log("incoming transfers: ", incomingFileTransfersRef.current)
-  console.log("outgoing transfers: ", outgoingFileTransfersRef.current)
+  console.log("selected files: ", selectedFiles)
+
 
   const addSystemMessage = (message: string) => {
     const chatMessage: ChatMessage = { peerId: "SYSTEM", message: message };
@@ -495,7 +501,6 @@ const App: React.FC = () => {
                 </div>
               ))}
               <br/>
-
             </div>
           ))}
           
@@ -503,8 +508,14 @@ const App: React.FC = () => {
           <br/>
           <br/>
 
-          <input type="file" onChange={handleFileUpload} />
+          <input type="file" multiple onChange={handleFileUpload} />
           <button onClick={handleFileSubmit}>SEND SELECTED FILE TO SELECTED PEERS!</button>
+
+          {selectedFiles.length > 1 ? 
+            <span> Selected multiple files. It will work, but it is advised to compress files into .zip before sending them using limitless. </span>
+            : 
+            <span> Keep in mind selecting multiple files may cause unforseeable stability issues. It's recommended to compress your shit into single .zip if you want to send multiple files. </span>
+          }
 
           <br />
           <br />
