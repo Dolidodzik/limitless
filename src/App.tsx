@@ -2,7 +2,7 @@ import React, { useEffect, useState, ChangeEvent, useRef } from "react";
 import Peer from "peerjs";
 import { ChatMessage, ConnectionData, userAccepts, progressUpdateMessage } from './interfaces'
 import { ChatRenderer, generateRandomString, calculateTotalChunks, isJsonString, sendChunksData, sendProgressUpdateMessage } from './utils';
-import { FileInfo } from './classes';
+import { FileInfo, senderCancelTransferMessage } from './classes';
 import { blobDict } from './types';
 
 
@@ -332,7 +332,7 @@ const App: React.FC = () => {
         file
       )
       
-      console.log("sending this offer to all connected clients: ", outgoingTransferOffer);
+      console.log("sending this offer to selected clients: ", outgoingTransferOffer);
       
       // sending data only to selected peers
       connectionsRef.current.forEach((c) => {
@@ -342,7 +342,7 @@ const App: React.FC = () => {
       });
   
       // when connection is already sent, we edit it for this client only and assign correct peer ids
-      const connectedPeerIDs: userAccepts[] = connectionsRef.current.map(c => ({ id: c.peerId, isAccepted: false, progress: null }));
+      const connectedPeerIDs: userAccepts[] = targetPeers.map(targetPeerID => ({ id: targetPeerID, isAccepted: false, progress: null }));
       
       outgoingTransferOffer.setPeerIDs(myPeerId, connectedPeerIDs);
       outgoingFileTransfersRef.current = [...outgoingFileTransfersRef.current, outgoingTransferOffer];
@@ -437,6 +437,34 @@ const App: React.FC = () => {
     });
   }
 
+  const senderCancelTransfer = (transferID: string) => {
+    console.log("RUNNING senderCancelTransfer func on this transfer ", transferID)
+    const transferIndex = outgoingFileTransfersRef.current.findIndex(
+      transfer => transfer.id === transferID
+    );
+    
+    const transferPeers = outgoingFileTransfersRef.current[transferIndex].receiverPeers.map(peer => peer.id)
+
+    // sending data only to selected peers
+    connectionsRef.current.forEach((c) => {
+      if(transferPeers.includes(c.peerId)){
+        c.connection.send(JSON.stringify(new senderCancelTransferMessage(transferID)))
+      }
+    });
+
+    // change transfer on THIS peer to cancelled
+    if (transferIndex !== -1) {
+      outgoingFileTransfersRef.current[transferIndex].cancelled = true;
+    }
+    forceUpdate();
+  }
+
+  const deleteOutgoingTransfer = (transferID: string) => {
+    console.log("DELETING TRANFER ", transferID)
+    outgoingFileTransfersRef.current = outgoingFileTransfersRef.current.filter(
+      fileInfo => fileInfo.id !== transferID
+    );
+  }
 
   return (
     <div className="App">
@@ -500,6 +528,13 @@ const App: React.FC = () => {
             <div key={transfer.id} className="box"> 
               * <b>{transfer.id}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks. <br/> 
               <b> (DEBUG INFO) Chunking progress (not actual upload progress, just information about how many chunks were produced here, on sender machine): {transfer.progress} </b> <br/> 
+              
+              {transfer.cancelled ? 
+                <span> you cancelled this transfer. Do you want to delete it from here all together? <button onClick={() => deleteOutgoingTransfer(transfer.id)}> YES </button> </span>
+                : 
+                <button onClick={() => senderCancelTransfer(transfer.id)}> CANCEL THIS TRANSFER </button>
+              }
+              
               To peers:
               {transfer.receiverPeers.map((receiver) => (
                 <div key={receiver.id}> 

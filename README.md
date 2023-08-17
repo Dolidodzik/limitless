@@ -23,6 +23,8 @@ pausing breaking etc edge cases connection during upload or not, during offer se
 
 MOVE generateRandomString to class constructor
 
+code vs dataType do transferowania wiadomosci systemowych
+
 Dealing with offers JSON stringing etc in a better way
 Id vs id vs ID
 better ways of checking what transfer chunks are being received maybe? but what we have now is fine ig

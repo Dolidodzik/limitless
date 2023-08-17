@@ -11,6 +11,7 @@ export class FileInfo implements FileInfoInterface {
       public senderPeerID: string | null = null,
       public receiverPeers: userAccepts[] = [],
       public progress: number | null = null, // when progress is null, it means upload itself didn't start yet. Progress shouldn't be more than 100 or less than 0. ACTUALLY - this progress is kind of useless, it just tells how much chunking progression was done. Let's keep it, but use progress from receiverPeers[i].progress - it tells actual progress that client has.
+      public cancelled: boolean = false  
     ) {}
     
     public setPeerIDs = (senderPeerID: string, receiverPeers: userAccepts[]) => {
@@ -27,3 +28,10 @@ export class FileInfo implements FileInfoInterface {
       }
     }
   }
+
+export class senderCancelTransferMessage {
+  constructor(
+    readonly transferID: string,
+    readonly messageCode: string = "SENDER_CANCELLED_TRANSFER",
+  ) {}
+}
