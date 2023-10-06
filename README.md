@@ -1,6 +1,8 @@
 branch for working out MVP functionality and codebase, witout styling or usable UI.
 to run just npm install && npm run start
 
+DOWNLOAD / UPLOAD SPEED
+
 // TODO
 MULTIPLE FILE UPLOADS
 PREVENT USERS WHO DIDN'T SHARE LINK/CODE EXPLICITLY THEMSELVES FROM RECEIVING CONNECTIONS
@@ -22,6 +24,8 @@ pausing breaking etc edge cases connection during upload or not, during offer se
       }
 
 MOVE generateRandomString to class constructor
+
+sprawdzanie validacja received chunkow
 
 code vs dataType do transferowania wiadomosci systemowych
 
@@ -48,3 +52,5 @@ ten sam plik byl rownolegle pobierany do obu przegladarek i sie zjebalo ewidentn
 ACTUAL VALIDATION WHAT FILE WE ARE RECEIVING, IF FILE IS 10MB, WE SHOULDNT MORE CHUNKS THAN 10MB DOES IT MAKE SENSE. THINK ABOUT OTHER WAYS MALICIOUS ACTORS COULD TRY TO EXPLOIT PEER 2 PEER CONNECTION, THINK ABOUT USERS SAFETY
 
 BUTTON FOR DECLINING TRANSFER
+
+TRANSER SPEED KBPS DISPLAY

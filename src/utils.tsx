@@ -3,6 +3,7 @@
 import React from 'react';
 import { ChatMessage, ConnectionData, progressUpdateMessage } from './interfaces';
 import { blobDict } from './types';
+import { FileInfo } from './classes'; 
 
 export function ChatRenderer(chatLogs: ChatMessage[], ownId: string) {
     return (
@@ -43,7 +44,7 @@ export function isJsonString(str: string): boolean {
   return true;
 }
 
-export const sendChunksData = (file: File, connectionData: ConnectionData, transferID: string, setProgress: Function, chunkSize: number = 64 * 1024) => {
+export const sendChunksData = async (file: File, connectionData: ConnectionData, transferID: string, setProgress: Function, ref: React.MutableRefObject<FileInfo[]>, chunkSize: number = 64 * 1024) => {
 
   if (!file){
     console.log("NO FILE SELECTED??? BIG ERROR SOMETHING WENT WRONG.");
@@ -68,20 +69,54 @@ export const sendChunksData = (file: File, connectionData: ConnectionData, trans
       transferID: transferID,
       chunkOrder: currentChunk
     };
+    
+    const doTheSending = async () => {
+      connectionData.connection.send(chunk);
 
-    connectionData.connection.send(chunk);
-
-    if (currentChunk % 5 === 0) {
-      setProgress(transferID, Math.floor((currentChunk / totalChunks) * 100 * 100) / 100); // * 100 because progress is like this 0.50 means 50%, so to get % value instead of fraction we need * 100. Then *100 and /100, because we are rounding up to 2 decimal places. Rounding down with Math.floor, so it will never be 100, to make 100 we will need to do it explicitly.
+      if (currentChunk % 5 === 0) {
+        setProgress(transferID, Math.floor((currentChunk / totalChunks) * 100 * 100) / 100); // * 100 because progress is like this 0.50 means 50%, so to get % value instead of fraction we need * 100. Then *100 and /100, because we are rounding up to 2 decimal places. Rounding down with Math.floor, so it will never be 100, to make 100 we will need to do it explicitly.
+      }
+  
+      if (currentChunk < totalChunks - 1) {
+        currentChunk++;
+        loadNextChunk();
+      }else{
+        console.log("FINISHED SENDING STUFF, HOOORAYYY, PROGRESS IS 100%")
+        setProgress(transferID, 100);
+      }
     }
 
-    if (currentChunk < totalChunks - 1) {
-      currentChunk++;
-      loadNextChunk();
-    }else{
-      console.log("FINISHED SENDING STUFF, HOOORAYYY, PROGRESS IS 100%")
-      setProgress(transferID, 100);
+    const waiter = async() => {
+      const fileInfo = ref.current.find(
+        (fileInfo) => fileInfo.id === transferID
+      );
+      const userAccepts = fileInfo?.receiverPeers.find(
+        (peer) => peer.id === connectionData.peerId
+      );
+      let clientProgress: number = 0;
+      if(userAccepts?.progress){
+        clientProgress = userAccepts.progress
+      }
+
+      console.log("==================")
+      console.log("1: "+ (currentChunk / totalChunks) * 100)
+      console.log(clientProgress+2)
+      if(clientProgress+2 >= (currentChunk / totalChunks) * 100){
+        console.log("DOING THE SENDING")
+        console.log("DOING THE SENDING")
+        console.log("DOING THE SENDING")
+        doTheSending();
+      } else {
+        console.log("WATING WATING WATING")
+        console.log("WATING WATING WATING")
+        console.log("WATING WATING WATING")
+        setTimeout(function () {
+          waiter();
+        }, 100)
+      }
     }
+    waiter();
+
   };
 
   const loadNextChunk = () => {
@@ -92,11 +127,12 @@ export const sendChunksData = (file: File, connectionData: ConnectionData, trans
     reader.readAsArrayBuffer(chunk);
   };
 
-  loadNextChunk();
+  if(currentChunk <= 0){
+    loadNextChunk();
+  }
 };
 
 export function sendProgressUpdateMessage(progress: number, senderPeerId: string, transferID: string, connectionsRef: ConnectionData[]){
-  
   const progressUpdate: progressUpdateMessage = {
     progress: progress,
     transferID: transferID,

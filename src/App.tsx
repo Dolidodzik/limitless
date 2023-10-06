@@ -26,6 +26,9 @@ const App: React.FC = () => {
 
   const [chatLogs, setChatLogs] = useState<ChatMessage[]>([]);
 
+  console.log("CURRENT CONNECTIONS")
+  console.log(connectionsRef.current)
+
   const setProgress = (transferID: string, progress: number) => {
     if(progress > 100){
       progress = 100;
@@ -96,17 +99,15 @@ const App: React.FC = () => {
       console.log("NON EXISTING DATA WAS SENT")
       return;
     }
-    console.log("RECEIVED SOME DATA: ", data)
+    //console.log("RECEIVED SOME DATA: ", data)
 
     if (data.dataType && data.dataType === "FILE_CHUNK") {
-      console.log("RECEIVED FILE_CHUNK", data);
+      //console.log("RECEIVED FILE_CHUNK", data);
       const { chunk, currentChunk, totalChunks, name, type, transferID, chunkOrder } = data;
       const chunkData = new Uint8Array(chunk);
       const fileChunk = new Blob([chunkData], { type });
 
       // if there isn't transfer with that ID in blob list, then add it
-
-      console.log("IMPORTANT UWUWUWUWUWUWU", transferID)
 
       if (!receivedChunks[transferID]) {
         receivedChunks[transferID] = {
@@ -122,8 +123,6 @@ const App: React.FC = () => {
 
       if (receivedChunks[transferID].chunks.length % 10 === 0) {
         console.log("CHANGE RECEIVER PROGRESS...")
-        console.log("CHANGE RECEIVER PROGRESS...")
-        console.log("CHANGE RECEIVER PROGRESS...")
         let progress = Math.floor((receivedChunks[transferID].chunks.length / totalChunks) * 100 * 100) / 100;
         if(progress >= 100){
           progress = 99.99; // we don't set 100 here, if that would be the case for whatever reason. We set 100% only when we combined file and nothing crashed.
@@ -137,7 +136,7 @@ const App: React.FC = () => {
         
         if (transferIndex !== -1) {
           incomingFileTransfersRef.current[transferIndex].progress = progress;
-          console.log(`receiver progress of transfer with ID ${transferID} has been set to ${transferID}.`);
+          //console.log(`receiver progress of transfer with ID ${transferID} has been set to ${transferID}.`);
           
           // letting know uploader how download progress is going
           sendProgressUpdateMessage(
@@ -236,8 +235,8 @@ const App: React.FC = () => {
 
       if(updatedFile.selectedFile && connectionData){
         console.log("SENDING CHUNKS")
-        sendChunksData(updatedFile.selectedFile, connectionData, updatedFile.id, setProgress)
         outgoingFileTransfersRef.current[fileIndex].progress = 0;
+        sendChunksData(updatedFile.selectedFile, connectionData, updatedFile.id, setProgress, outgoingFileTransfersRef)
         forceUpdate()
       }else{
         console.log("BIG ERROR SELECTED FILE IS EMPTY, CANNOT SEND OR CONNECTION DATA IS EMPTY FOR SOME REASON")
@@ -259,6 +258,9 @@ const App: React.FC = () => {
         console.log("got this offer: ", incomingOffer);
         incomingFileTransfersRef.current = [...incomingFileTransfersRef.current, incomingOffer];
         forceUpdate();
+      } else if (data.code == "SENDER_CANCELLED_TRANSFER"){
+        console.log(data)
+        console.log(" DATA RECEIVED SENDER_CANCELLED_TRANSFER")
       }else{
         console.log("WRONG JSON STRING RECEIVED ", data)
       }
@@ -464,6 +466,7 @@ const App: React.FC = () => {
     outgoingFileTransfersRef.current = outgoingFileTransfersRef.current.filter(
       fileInfo => fileInfo.id !== transferID
     );
+    forceUpdate();
   }
 
   return (
