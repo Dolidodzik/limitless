@@ -101,7 +101,9 @@ export const sendChunksData = async (file: File, connectionData: ConnectionData,
       console.log("==================")
       console.log("1: "+ (currentChunk / totalChunks) * 100)
       console.log(clientProgress+2)
-      if(clientProgress+2 >= (currentChunk / totalChunks) * 100){
+
+      // this check makes sure we don't chunk too much of data in advance. It should matter only for bigger files tho. 
+      if((totalChunks<100) || (clientProgress+2 >= (currentChunk / totalChunks) * 100)){
         console.log("DOING THE SENDING")
         console.log("DOING THE SENDING")
         console.log("DOING THE SENDING")

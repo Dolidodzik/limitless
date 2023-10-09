@@ -1,0 +1,16 @@
+DOWNLOAD / UPLOAD SPEED DISPLAY
+CLEANUP OVERALL
+chunk size as global setting, move more stuff to global settings somewhere
+MOVE generateRandomString to class constructor
+CANCELOWANIE UPLOADU
+checking if transferID matches PeerID when receiving each chunk
+Dealing with offers JSON stringing etc in a better way, when it comes to receiving different kinds of messages
+Id vs id vs ID
+math progress validation to utils, generally move as much shit as possible to utils.js
+
+ACTUAL VALIDATION WHAT FILE WE ARE RECEIVING, IF FILE IS 10MB, WE SHOULDNT MORE CHUNKS THAN 10MB DOES IT MAKE SENSE. THINK ABOUT OTHER WAYS MALICIOUS ACTORS COULD TRY TO EXPLOIT PEER 2 PEER CONNECTION, THINK ABOUT USERS SAFETY
+
+BUTTON FOR DECLINING TRANSFER
+cleanup console.logs and shit
+LINTING
+There shouldn't be cancel transfer button, when 
