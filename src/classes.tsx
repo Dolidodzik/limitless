@@ -1,4 +1,5 @@
-import { FileInfoInterface, userAccepts } from "./interfaces";
+import { FileInfoInterface, userAccepts, chunkProgress } from "./interfaces";
+import { uploadProgress } from "./utils"
 
 export class FileInfo implements FileInfoInterface {
     constructor(
@@ -10,8 +11,10 @@ export class FileInfo implements FileInfoInterface {
       readonly selectedFile: File | null = null, // only sender needs it, just to keep track of what file he needs to send   
       public senderPeerID: string | null = null,
       public receiverPeers: userAccepts[] = [],
-      public progress: number | null = null, // when progress is null, it means upload itself didn't start yet. Progress shouldn't be more than 100 or less than 0. ACTUALLY - this progress is kind of useless, it just tells how much chunking progression was done. Let's keep it, but use progress from receiverPeers[i].progress - it tells actual progress that client has.
-      public cancelled: boolean = false  
+      public cancelled: boolean = false, 
+      // only receiver uses those
+      public progress: number | null = null, 
+      public last5chunks: chunkProgress[] = [],
     ) {}
     
     public setPeerIDs = (senderPeerID: string, receiverPeers: userAccepts[]) => {
@@ -20,12 +23,24 @@ export class FileInfo implements FileInfoInterface {
     }
 
     public setPeerProgress = (peerId: string, progress: number) => {
-      console.log("set peer progress here")
       const peerIndex = this.receiverPeers.findIndex((peer) => peer.id === peerId);
       if (peerIndex !== -1) {
-        console.log("ACTUALLY SETTING PROGRESS")
         this.receiverPeers[peerIndex].progress = progress;
       }
+    }
+
+    public appendLast5Chunks = (chunkNumber: number) => {
+      const newChunk: chunkProgress = {
+        time: Date.now(), 
+        chunkNumber,
+      };
+      this.last5chunks.unshift(newChunk);
+      if (this.last5chunks.length > 5) {
+        this.last5chunks.pop();
+      }
+      console.log("LAST 5 CHUNKSS")
+      console.log(this.last5chunks)
+      console.log(uploadProgress(this.last5chunks))
     }
   }
 

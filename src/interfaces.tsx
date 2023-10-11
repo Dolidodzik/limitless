@@ -30,3 +30,8 @@ export interface progressUpdateMessage {
   transferID: string,
   progress: number
 }
+
+export interface chunkProgress {
+  time: number, // timestamp with miliseconds
+  chunkNumber: number
+}

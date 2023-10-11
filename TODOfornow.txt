@@ -20,3 +20,6 @@ NICKNAMES ZAMIAST ZJEBANYCH ID
 Id vs id vs ID
 pausing upload for given user
 zwracanie jakis bledow jak plik jest pusty itd
+adding more functions to FileInfo can make things easier
+czyszczenie transferow przy cancelu zeby zwolnic ram?
+podzielenie FileInfo na 2 klasy dziedziczace z tego samego, rozniace sie tym czym maja sie roznic

@@ -85,7 +85,7 @@ const App: React.FC = () => {
     if(!data){
       return;
     }
-    console.log("RECEIVED SOME DATA: ", data)
+    //console.log("RECEIVED SOME DATA: ", data)
 
     if (data.dataType && data.dataType === "FILE_CHUNK") {
       //console.log("RECEIVED FILE_CHUNK", data);
@@ -94,11 +94,15 @@ const App: React.FC = () => {
       const fileChunk = new Blob([chunkData], { type });
 
       // if there isn't transfer with that ID in blob list, then add it
-
       if (!receivedChunks[transferID]) {
         receivedChunks[transferID] = {
           chunks: [],
         };
+      }else{
+        const fileInfo = incomingFileTransfersRef.current.find(
+          (fileInfo) => fileInfo.id === transferID
+        );
+        fileInfo?.appendLast5Chunks(currentChunk);
       }
       
       receivedChunks[transferID].chunks.push({
@@ -108,7 +112,6 @@ const App: React.FC = () => {
 
 
       if (receivedChunks[transferID].chunks.length % 10 === 0) {
-        console.log("CHANGE RECEIVER PROGRESS...")
         let progress = Math.floor((receivedChunks[transferID].chunks.length / totalChunks) * 100 * 100) / 100;
         if(progress >= 100){
           progress = 99.99; // we don't set 100 here, if that would be the case for whatever reason. We set 100% only when we combined file and nothing crashed.
@@ -137,18 +140,12 @@ const App: React.FC = () => {
           console.log(`No reciver transfer found with ID ${transferID}.`);
         }
       }
-
-
-      console.log("recived chunks up to this point: ", receivedChunks);
-
-      if (currentChunk === totalChunks - 1) {
-        console.log("LAST_CHUNK_RECEIVED");
       
+      // last chunk received
+      if (currentChunk === totalChunks - 1) {
         // Sort the received chunks by chunkOrder
-        console.log("SORTING SHIT...")
         const beforeSorting = receivedChunks
         receivedChunks[transferID].chunks.sort((a, b) => a.chunkOrder - b.chunkOrder);
-        console.log("DONE")
         if(beforeSorting == receivedChunks){
           console.log("before sorting chunks they were fine")
         }else{
@@ -174,7 +171,6 @@ const App: React.FC = () => {
           transferID,
           connectionsRef.current
         );
-        console.log("called sendprogresupdatemessage with ", senderPeerId, transferID, connectionsRef.current);
       
         // set progress to 100
         const transferIndex = incomingFileTransfersRef.current.findIndex(
@@ -187,12 +183,9 @@ const App: React.FC = () => {
         receivedChunks[transferID].chunks = [];
       }      
     } else if (data.dataType == "TRANSFER_PROGRESS_UPDATE") {
-
-      console.log("RECEIVED TRANSFER_PROGRESS_UPDATE ", data)
     
       // Find the corresponding FileInfo object in the outgoingFileTransfersRef
       const fileInfo = outgoingFileTransfersRef.current.find((file) => file.id === data.transferID);
-      console.log("FILE INFO ", fileInfo)
       if (fileInfo) {
         console.log("FILE INFO EXISTS")
         fileInfo.setPeerProgress(senderPeerId, data.progress);

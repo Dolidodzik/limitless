@@ -1,7 +1,7 @@
 // FOR NOW I WILL KEEP HERE ALL STUFF THAT IS EASILY SEPARATABLE FROM APP.TSX, LATER THERE WILL BE MORE SPLITING DONE
 
 import React from 'react';
-import { ChatMessage, ConnectionData, progressUpdateMessage } from './interfaces';
+import { ChatMessage, ConnectionData, progressUpdateMessage, chunkProgress } from './interfaces';
 import { blobDict } from './types';
 import { FileInfo } from './classes'; 
 
@@ -89,6 +89,11 @@ export const sendChunksData = async (file: File, connectionData: ConnectionData,
       const fileInfo = ref.current.find(
         (fileInfo) => fileInfo.id === transferID
       );
+      
+      /*
+      fileInfo?.appendLast5Chunks(currentChunk);
+      */
+
       const userAccepts = fileInfo?.receiverPeers.find(
         (peer) => peer.id === connectionData.peerId
       );
@@ -97,7 +102,7 @@ export const sendChunksData = async (file: File, connectionData: ConnectionData,
         clientProgress = userAccepts.progress
       }
 
-      // this check makes sure we don't chunk too much of data in advance. It should matter only for bigger files tho. 
+      // this check makes sure we don't chunk too much of data in advance. It matters only for bigger files tho
       if((totalChunks<100) || (clientProgress+2 >= (currentChunk / totalChunks) * 100)){
         doTheSending();
       } else {
@@ -113,7 +118,6 @@ export const sendChunksData = async (file: File, connectionData: ConnectionData,
     const start = currentChunk * chunkSize;
     const end = Math.min(start + chunkSize, file.size);
     const chunk = file.slice(start, end);
-
     reader.readAsArrayBuffer(chunk);
   };
 
@@ -132,4 +136,23 @@ export function sendProgressUpdateMessage(progress: number, senderPeerId: string
   connectionsRef
   .filter((c) => c.peerId === senderPeerId)
   .forEach((c) => c.connection.send(progressUpdate));
+}
+
+export function uploadProgress(last5chunks: chunkProgress[]) {
+  if (last5chunks.length < 2) {
+    console.log("Insufficient data for progress calculation.");
+    return;
+  }
+  let totalUploadedSize = 0;
+  for (let i = 0; i < last5chunks.length - 1; i++) {
+    totalUploadedSize += last5chunks[i].chunkNumber * 64; // Assuming one chunk is 64kb
+  }
+
+  const startTime = last5chunks[last5chunks.length - 1].time;
+  const endTime = last5chunks[0].time;
+  const durationInSeconds = (endTime - startTime) / 1000;
+
+  const uploadSpeedKbps = (totalUploadedSize / durationInSeconds) / 1024;
+
+  console.log("UPLOAD SPEED: ", uploadSpeedKbps, " Kbps");
 }
