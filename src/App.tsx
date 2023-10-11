@@ -26,9 +26,6 @@ const App: React.FC = () => {
 
   const [chatLogs, setChatLogs] = useState<ChatMessage[]>([]);
 
-  console.log("CURRENT CONNECTIONS")
-  console.log(connectionsRef.current)
-
   const setProgress = (transferID: string, progress: number) => {
     if(progress > 100){
       progress = 100;
@@ -42,10 +39,7 @@ const App: React.FC = () => {
     
     if (transferIndex !== -1) {
       outgoingFileTransfersRef.current[transferIndex].progress = progress;
-      console.log(`Progress of transfer with ID ${transferID} has been set to ${progress}.`);
       forceUpdate()
-    } else {
-      console.log(`No transfer found with ID ${transferID}.`);
     }
   }
 
@@ -54,38 +48,31 @@ const App: React.FC = () => {
     const newPeer = new Peer();
 
     newPeer.on("open", (id) => {
-      console.log("My peer ID is: " + id);
       setMyPeerId(id);
       setPeer(newPeer);
     });
 
     newPeer.on("connection", (conn) => {
-      console.log("Incoming connection from: " + conn.peer);
-
       conn.on("open", () => {
         const newConnectionData: ConnectionData = {
           connection: conn,
           peerId: conn.peer,
         };
         connectionsRef.current = [...connectionsRef.current, newConnectionData];
-        console.log("Connection established with: " + conn.peer);
         addSystemMessage("Connection established with: " + conn.peer)
       });
 
       conn.on("data", (data) => {
-        console.log("FIRST DATA EVENT RECEIVE");
         handleReceivedData(data, conn.peer);
       });
 
       conn.on("close", () => {
         connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== conn.peer);
-        console.log("Connection closed with: " + conn.peer);
         addSystemMessage("Connection closed with: " + conn.peer)
       });
     });
 
     return () => {
-      console.log("RETURN USEEFFECT CLEANUP");
       connectionsRef.current.forEach((c) => c.connection.close());
       connectionsRef.current = [];
       setChatLogs([]);
@@ -96,10 +83,9 @@ const App: React.FC = () => {
 
   const handleReceivedData = (data: any, senderPeerId: string) => {
     if(!data){
-      console.log("NON EXISTING DATA WAS SENT")
       return;
     }
-    //console.log("RECEIVED SOME DATA: ", data)
+    console.log("RECEIVED SOME DATA: ", data)
 
     if (data.dataType && data.dataType === "FILE_CHUNK") {
       //console.log("RECEIVED FILE_CHUNK", data);
@@ -275,7 +261,6 @@ const App: React.FC = () => {
   const connectToPeer = () => {
     const peerId = (document.getElementById("peerIdInput") as HTMLInputElement).value;
     if (peer && peerId) {
-      console.log("Initiating connection to: " + peerId);
       const conn = peer.connect(peerId);
 
       conn.on("open", () => {
@@ -284,18 +269,15 @@ const App: React.FC = () => {
           peerId: conn.peer,
         };
         connectionsRef.current = [...connectionsRef.current, newConnectionData];
-        console.log("Connection established with: " + conn.peer);
         addSystemMessage("Connection established with: " + conn.peer)
       });
 
       conn.on("data", (data) => {
-        console.log("SECOND DATA EVENT RECEIVE");
         handleReceivedData(data, conn.peer);
       });
 
       conn.on("close", () => {
         connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== conn.peer);
-        console.log("Connection closed with: " + conn.peer);
         addSystemMessage("Connection closed with: " + conn.peer)
       });
     }
@@ -303,15 +285,12 @@ const App: React.FC = () => {
 
   const sendMessage = () => {
     if (messageInput) {
-      console.log("Sending message: " + messageInput);
       const chatMessage: ChatMessage = { peerId: myPeerId, message: messageInput };
       setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
       connectionsRef.current
         .filter((c) => c.peerId !== myPeerId)
         .forEach((c) => c.connection.send(messageInput));
       setMessageInput("");
-      console.log("MY CONNECTIONS:");
-      console.log(connectionsRef.current);
     }
   };
 
@@ -321,10 +300,7 @@ const App: React.FC = () => {
       return;
     } 
 
-    console.log('selected files', selectedFiles)
-
     selectedFiles.forEach((file) => {
-      console.log("file", file)
       let outgoingTransferOffer = new FileInfo(
         file.name,
         file.size,
@@ -333,8 +309,6 @@ const App: React.FC = () => {
         file.type,
         file
       )
-      
-      console.log("sending this offer to selected clients: ", outgoingTransferOffer);
       
       // sending data only to selected peers
       connectionsRef.current.forEach((c) => {
@@ -366,16 +340,11 @@ const App: React.FC = () => {
   };
 
   const resetConnection = () => {
-    console.log("Resetting connection...");
     connectionsRef.current.forEach((c) => c.connection.close());
     connectionsRef.current = [];
     setChatLogs([]);
     forceUpdate();
   };
-
-  console.log("RE RENDERING");
-  console.log("selected files: ", selectedFiles)
-
 
   const addSystemMessage = (message: string) => {
     const chatMessage: ChatMessage = { peerId: "SYSTEM", message: message };
@@ -383,7 +352,6 @@ const App: React.FC = () => {
   }
 
   const disconnectFromSelectedClient = (peerId: string) => {
-    console.log("Connection closed with (BY BUTTON CLICK): " + peerId);
     // closing connection with unwanted peer
     connectionsRef.current.forEach((c) => {
       if(c.peerId === peerId)
@@ -392,7 +360,6 @@ const App: React.FC = () => {
     
     // removing unwanted peer from connections ref
     connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== peerId);
-
     forceUpdate();
   }
 
@@ -440,7 +407,6 @@ const App: React.FC = () => {
   }
 
   const senderCancelTransfer = (transferID: string) => {
-    console.log("RUNNING senderCancelTransfer func on this transfer ", transferID)
     const transferIndex = outgoingFileTransfersRef.current.findIndex(
       transfer => transfer.id === transferID
     );
@@ -462,7 +428,6 @@ const App: React.FC = () => {
   }
 
   const deleteOutgoingTransfer = (transferID: string) => {
-    console.log("DELETING TRANFER ", transferID)
     outgoingFileTransfersRef.current = outgoingFileTransfersRef.current.filter(
       fileInfo => fileInfo.id !== transferID
     );

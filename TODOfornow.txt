@@ -1,6 +1,8 @@
 DOWNLOAD / UPLOAD SPEED DISPLAY
 CLEANUP OVERALL
+
 chunk size as global setting, move more stuff to global settings somewhere
+
 MOVE generateRandomString to class constructor
 CANCELOWANIE UPLOADU
 checking if transferID matches PeerID when receiving each chunk
@@ -14,3 +16,7 @@ BUTTON FOR DECLINING TRANSFER
 cleanup console.logs and shit
 LINTING
 There shouldn't be cancel transfer button, when 
+NICKNAMES ZAMIAST ZJEBANYCH ID
+Id vs id vs ID
+pausing upload for given user
+zwracanie jakis bledow jak plik jest pusty itd
