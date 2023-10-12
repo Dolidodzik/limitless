@@ -1,9 +1,9 @@
 // FOR NOW I WILL KEEP HERE ALL STUFF THAT IS EASILY SEPARATABLE FROM APP.TSX, LATER THERE WILL BE MORE SPLITING DONE
 
-import React from 'react';
+import React, {RefObject} from 'react';
 import { ChatMessage, ConnectionData, progressUpdateMessage, chunkProgress } from './interfaces';
 import { blobDict } from './types';
-import { FileInfo } from './classes'; 
+import { FileTransfer } from './classes'; 
 
 export function ChatRenderer(chatLogs: ChatMessage[], ownId: string) {
     return (
@@ -44,7 +44,7 @@ export function isJsonString(str: string): boolean {
   return true;
 }
 
-export const sendChunksData = async (file: File, connectionData: ConnectionData, transferID: string, setProgress: Function, ref: React.MutableRefObject<FileInfo[]>, chunkSize: number = 64 * 1024) => {
+export const sendChunksData = async (file: File, connectionData: ConnectionData, transferID: string, setProgress: Function, ref: React.MutableRefObject<FileTransfer[]>, chunkSize: number = 64 * 1024) => {
 
   if (!file){
     console.log("NO FILE SELECTED??? BIG ERROR SOMETHING WENT WRONG.");
@@ -138,21 +138,45 @@ export function sendProgressUpdateMessage(progress: number, senderPeerId: string
   .forEach((c) => c.connection.send(progressUpdate));
 }
 
-export function uploadProgress(last5chunks: chunkProgress[]) {
-  if (last5chunks.length < 2) {
-    console.log("Insufficient data for progress calculation.");
-    return;
-  }
-  let totalUploadedSize = 0;
-  for (let i = 0; i < last5chunks.length - 1; i++) {
-    totalUploadedSize += last5chunks[i].chunkNumber * 64; // Assuming one chunk is 64kb
+export function transferProgress(last5chunks: chunkProgress[], progress: number) {
+
+  if (last5chunks.length < 2 || progress == 100) {
+    return 0;
   }
 
-  const startTime = last5chunks[last5chunks.length - 1].time;
-  const endTime = last5chunks[0].time;
-  const durationInSeconds = (endTime - startTime) / 1000;
+  // return value in kilo BYTES, not bits
+  const chunkSizeKB = 64;
+  const numberOfChunks = last5chunks.length;
+  
+  // Calculate the total time taken to upload the chunks (in milliseconds).
+  const totalTime = last5chunks[0].time - last5chunks[numberOfChunks - 1].time;
 
-  const uploadSpeedKbps = (totalUploadedSize / durationInSeconds) / 1024;
+  // Calculate the total size of the chunks (in kilobytes).
+  const totalSizeKB = (last5chunks[0].chunkNumber - last5chunks[numberOfChunks - 1].chunkNumber) * chunkSizeKB;
 
-  console.log("UPLOAD SPEED: ", uploadSpeedKbps, " Kbps");
+  // Calculate the upload speed (KB/s).
+  const uploadSpeedKBps = totalSizeKB / (totalTime / 1000);
+
+  return Math.round(uploadSpeedKBps);
+}
+
+// should be called every 500ms. This function loops over every transfer, and checks how progress is going
+export function dealWithTransferProgressUpdates(
+  outgoingFileTransfersRef: RefObject<FileTransfer[]>,
+  receivedChunks: blobDict,
+  incomingFileTransfersRef: RefObject<FileTransfer[]>
+){
+  // for incoming transfers
+  if (incomingFileTransfersRef && incomingFileTransfersRef.current) {
+    incomingFileTransfersRef.current.forEach((fileTransfer) => {
+      let chunks = 0;
+      if(receivedChunks[fileTransfer.id] && receivedChunks[fileTransfer.id].chunks){
+        chunks = receivedChunks[fileTransfer.id].chunks.length
+      }
+      fileTransfer.appendLast5Chunks(chunks)
+      console.log(fileTransfer.last5updates)
+    });
+  }
+
+  // for outgoing transfers
 }

@@ -1,8 +1,8 @@
 import React, { useEffect, useState, ChangeEvent, useRef } from "react";
 import Peer from "peerjs";
 import { ChatMessage, ConnectionData, userAccepts, progressUpdateMessage } from './interfaces'
-import { ChatRenderer, generateRandomString, calculateTotalChunks, isJsonString, sendChunksData, sendProgressUpdateMessage } from './utils';
-import { FileInfo, senderCancelTransferMessage } from './classes';
+import { ChatRenderer, generateRandomString, calculateTotalChunks, isJsonString, sendChunksData, sendProgressUpdateMessage, transferProgress, dealWithTransferProgressUpdates } from './utils';
+import { FileTransfer, senderCancelTransferMessage } from './classes';
 import { blobDict } from './types';
 
 
@@ -21,8 +21,8 @@ const App: React.FC = () => {
   const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 
   const connectionsRef = useRef<ConnectionData[]>([]);
-  const outgoingFileTransfersRef = useRef<FileInfo[]>([]);
-  const incomingFileTransfersRef = useRef<FileInfo[]>([]);
+  const outgoingFileTransfersRef = useRef<FileTransfer[]>([]);
+  const incomingFileTransfersRef = useRef<FileTransfer[]>([]);
 
   const [chatLogs, setChatLogs] = useState<ChatMessage[]>([]);
 
@@ -46,6 +46,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const newPeer = new Peer();
+    const progressUpdatesInterval = setInterval(() => 
+    dealWithTransferProgressUpdates(
+      outgoingFileTransfersRef, 
+      receivedChunks, 
+      incomingFileTransfersRef)
+    , 500);
+
 
     newPeer.on("open", (id) => {
       setMyPeerId(id);
@@ -78,6 +85,7 @@ const App: React.FC = () => {
       setChatLogs([]);
       newPeer.disconnect();
       newPeer.destroy();
+      clearInterval(progressUpdatesInterval);
     };
   }, []);
 
@@ -102,14 +110,12 @@ const App: React.FC = () => {
         const fileInfo = incomingFileTransfersRef.current.find(
           (fileInfo) => fileInfo.id === transferID
         );
-        fileInfo?.appendLast5Chunks(currentChunk);
       }
       
       receivedChunks[transferID].chunks.push({
         blob: fileChunk,
         chunkOrder: chunkOrder,
       });
-
 
       if (receivedChunks[transferID].chunks.length % 10 === 0) {
         let progress = Math.floor((receivedChunks[transferID].chunks.length / totalChunks) * 100 * 100) / 100;
@@ -226,7 +232,7 @@ const App: React.FC = () => {
       data = JSON.parse(data);
       if(data && data.totalChunks && data.size){ // checking if data is valid offer, or at least looks like it
         console.log("file offer json string received ", data)
-        let incomingOffer = new FileInfo(
+        let incomingOffer = new FileTransfer(
           data.name,
           data.size,
           data.totalChunks,
@@ -294,7 +300,7 @@ const App: React.FC = () => {
     } 
 
     selectedFiles.forEach((file) => {
-      let outgoingTransferOffer = new FileInfo(
+      let outgoingTransferOffer = new FileTransfer(
         file.name,
         file.size,
         calculateTotalChunks(file.size, chunkSize),
@@ -475,7 +481,7 @@ const App: React.FC = () => {
                   {transfer.progress == null ? 
                     <span> Sender haven't started sending yet. </span>
                     : 
-                    <span> Progress: {transfer.progress} </span>
+                    <span> Progress: {transfer.progress}, <br/> Speed: {transferProgress(transfer.last5updates, transfer.progress)} KB/s </span>
                   }
                 </span>
               ) : (
