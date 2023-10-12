@@ -126,25 +126,28 @@ export const sendChunksData = async (file: File, connectionData: ConnectionData,
   }
 };
 
-export function sendProgressUpdateMessage(progress: number, senderPeerId: string, transferID: string, connectionsRef: ConnectionData[]){
+export function sendProgressUpdateMessage(progress: number, senderPeerId: string, transferID: string, connectionsRef: ConnectionData[], last5updates: chunkProgress[] | null){ // chunk progress can be null, because if it's just null then it means that we want to set speed to 0 and that's it
+
   const progressUpdate: progressUpdateMessage = {
     progress: progress,
     transferID: transferID,
-    dataType: "TRANSFER_PROGRESS_UPDATE"
+    dataType: "TRANSFER_PROGRESS_UPDATE",
+    last5updates: last5updates
   }
 
+  // sending progress update to the sender
   connectionsRef
   .filter((c) => c.peerId === senderPeerId)
   .forEach((c) => c.connection.send(progressUpdate));
 }
 
-export function transferProgress(last5chunks: chunkProgress[], progress: number) {
+export function transferProgress(last5chunks: chunkProgress[] | null, progress: number | null) {
 
-  if (last5chunks.length < 2 || progress == 100) {
+  // if there's no enough data to approximate speed, or progress is already 100, then just return speed as 0
+  if (!last5chunks || last5chunks.length < 2 || progress == 100) {
     return 0;
   }
 
-  // return value in kilo BYTES, not bits
   const chunkSizeKB = 64;
   const numberOfChunks = last5chunks.length;
   
@@ -157,12 +160,12 @@ export function transferProgress(last5chunks: chunkProgress[], progress: number)
   // Calculate the upload speed (KB/s).
   const uploadSpeedKBps = totalSizeKB / (totalTime / 1000);
 
-  return Math.round(uploadSpeedKBps);
+  // output is in MB/s rounded to 2 decimal places
+  return (uploadSpeedKBps/1024).toFixed(2);
 }
 
 // should be called every 500ms. This function loops over every transfer, and checks how progress is going
 export function dealWithTransferProgressUpdates(
-  outgoingFileTransfersRef: RefObject<FileTransfer[]>,
   receivedChunks: blobDict,
   incomingFileTransfersRef: RefObject<FileTransfer[]>
 ){
@@ -177,6 +180,4 @@ export function dealWithTransferProgressUpdates(
       console.log(fileTransfer.last5updates)
     });
   }
-
-  // for outgoing transfers
 }

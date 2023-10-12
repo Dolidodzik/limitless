@@ -36,12 +36,15 @@ export class FileTransfer implements FileInfoInterface {
     }
 
     // for sender
-    public setPeerProgress = (peerId: string, progress: number) => {
+    public setPeerProgress = (peerId: string, progress: number, last5updates: chunkProgress[] | null) => {
       const peerIndex = this.receiverPeers.findIndex((peer) => peer.id === peerId);
       if (peerIndex !== -1) {
         this.receiverPeers[peerIndex].progress = progress;
+        this.receiverPeers[peerIndex].last5updates = last5updates;
+        console.log("PEER UPDATE with this", last5updates);
       }
     }
+
 }
 
 export class senderCancelTransferMessage {
