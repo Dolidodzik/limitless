@@ -4,10 +4,10 @@ import { ChatMessage, ConnectionData, userAccepts, progressUpdateMessage,chunkPr
 import { ChatRenderer, generateRandomString, calculateTotalChunks, isJsonString, sendChunksData, sendProgressUpdateMessage, transferProgress, dealWithTransferProgressUpdates } from './utils';
 import { FileTransfer, senderCancelTransferMessage } from './classes';
 import { blobDict } from './types';
+import { AppConfig } from './config';
 
 
 let receivedChunks: blobDict = {};
-const chunkSize = 64 * 1024; // 64kB chunk size
 
 const App: React.FC = () => {
   const [peer, setPeer] = useState<Peer | null>(null);
@@ -50,7 +50,7 @@ const App: React.FC = () => {
     dealWithTransferProgressUpdates(
       receivedChunks, 
       incomingFileTransfersRef)
-    , 500);
+    , AppConfig.transferProgressUpdatesInterval);
 
 
     newPeer.on("open", (id) => {
@@ -300,7 +300,7 @@ const App: React.FC = () => {
       let outgoingTransferOffer = new FileTransfer(
         file.name,
         file.size,
-        calculateTotalChunks(file.size, chunkSize),
+        calculateTotalChunks(file.size, AppConfig.chunkSize),
         generateRandomString(32),
         file.type,
         file

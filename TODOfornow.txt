@@ -1,4 +1,4 @@
-DOWNLOAD / UPLOAD SPEED DISPLAY
+
 CLEANUP OVERALL
 
 chunk size as global setting, move more stuff to global settings somewhere
@@ -11,6 +11,8 @@ Id vs id vs ID
 math progress validation to utils, generally move as much shit as possible to utils.js
 
 ACTUAL VALIDATION WHAT FILE WE ARE RECEIVING, IF FILE IS 10MB, WE SHOULDNT MORE CHUNKS THAN 10MB DOES IT MAKE SENSE. THINK ABOUT OTHER WAYS MALICIOUS ACTORS COULD TRY TO EXPLOIT PEER 2 PEER CONNECTION, THINK ABOUT USERS SAFETY
+
+time left/estimated etc
 
 BUTTON FOR DECLINING TRANSFER
 cleanup console.logs and shit

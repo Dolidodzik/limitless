@@ -4,6 +4,7 @@ import React, {RefObject} from 'react';
 import { ChatMessage, ConnectionData, progressUpdateMessage, chunkProgress } from './interfaces';
 import { blobDict } from './types';
 import { FileTransfer } from './classes'; 
+import { AppConfig } from './config';
 
 export function ChatRenderer(chatLogs: ChatMessage[], ownId: string) {
     return (
@@ -44,7 +45,7 @@ export function isJsonString(str: string): boolean {
   return true;
 }
 
-export const sendChunksData = async (file: File, connectionData: ConnectionData, transferID: string, setProgress: Function, ref: React.MutableRefObject<FileTransfer[]>, chunkSize: number = 64 * 1024) => {
+export const sendChunksData = async (file: File, connectionData: ConnectionData, transferID: string, setProgress: Function, ref: React.MutableRefObject<FileTransfer[]>, chunkSize: number = AppConfig.chunkSize) => {
 
   if (!file){
     console.log("NO FILE SELECTED??? BIG ERROR SOMETHING WENT WRONG.");
@@ -148,7 +149,7 @@ export function transferProgress(last5chunks: chunkProgress[] | null, progress: 
     return 0;
   }
 
-  const chunkSizeKB = 64;
+  const chunkSizeKB = AppConfig.chunkSize / 1024;
   const numberOfChunks = last5chunks.length;
   
   // Calculate the total time taken to upload the chunks (in milliseconds).
@@ -169,7 +170,6 @@ export function dealWithTransferProgressUpdates(
   receivedChunks: blobDict,
   incomingFileTransfersRef: RefObject<FileTransfer[]>
 ){
-  // for incoming transfers
   if (incomingFileTransfersRef && incomingFileTransfersRef.current) {
     incomingFileTransfersRef.current.forEach((fileTransfer) => {
       let chunks = 0;
