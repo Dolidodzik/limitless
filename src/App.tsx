@@ -1,13 +1,11 @@
 import React, { useEffect, useState, ChangeEvent, useRef } from "react";
 import Peer from "peerjs";
 import { ChatMessage, ConnectionData, userAccepts, progressUpdateMessage,chunkProgress } from './interfaces'
-import { ChatRenderer, generateRandomString, calculateTotalChunks, isJsonString, sendChunksData, sendProgressUpdateMessage, transferProgress, dealWithTransferProgressUpdates } from './utils';
+import { ChatRenderer, generateRandomString, calculateTotalChunks, isJsonString, transferProgress, dealWithTransferProgressUpdates } from './utils';
 import { FileTransfer, senderCancelTransferMessage } from './classes';
 import { blobDict } from './types';
 import { AppConfig } from './config';
-
-
-let receivedChunks: blobDict = {};
+import { receiveFileChunk, receiveFileTransferFileAccept } from './receiverFunctions';
 
 const App: React.FC = () => {
   const [peer, setPeer] = useState<Peer | null>(null);
@@ -19,6 +17,8 @@ const App: React.FC = () => {
   const [targetPeers, setTargetPeers] = useState<string[]>([]);
 
   const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
+
+  const receivedChunks = useRef<blobDict>({});
 
   const connectionsRef = useRef<ConnectionData[]>([]);
   const outgoingFileTransfersRef = useRef<FileTransfer[]>([]);
@@ -43,12 +43,11 @@ const App: React.FC = () => {
     }
   }
 
-
   useEffect(() => {
     const newPeer = new Peer();
     const progressUpdatesInterval = setInterval(() => 
     dealWithTransferProgressUpdates(
-      receivedChunks, 
+      receivedChunks.current, 
       incomingFileTransfersRef)
     , AppConfig.transferProgressUpdatesInterval);
 
@@ -89,144 +88,43 @@ const App: React.FC = () => {
   }, []);
 
   const handleReceivedData = (data: any, senderPeerId: string) => {
-    if(!data){
+    
+    /*
+    if(!data || !data.dataType){
+      console.warn("Received some data with nonexistent dataType property")
       return;
     }
-    //console.log("RECEIVED SOME DATA: ", data)
+    */
 
-    if (data.dataType && data.dataType === "FILE_CHUNK") {
-      //console.log("RECEIVED FILE_CHUNK", data);
-      const { chunk, currentChunk, totalChunks, name, type, transferID, chunkOrder } = data;
-      const chunkData = new Uint8Array(chunk);
-      const fileChunk = new Blob([chunkData], { type });
-
-      // if there isn't transfer with that ID in blob list, then add it
-      if (!receivedChunks[transferID]) {
-        receivedChunks[transferID] = {
-          chunks: [],
-        };
-      }
-      
-      receivedChunks[transferID].chunks.push({
-        blob: fileChunk,
-        chunkOrder: chunkOrder,
-      });
-
-      if (receivedChunks[transferID].chunks.length % 10 === 0) {
-        let progress = Math.floor((receivedChunks[transferID].chunks.length / totalChunks) * 100 * 100) / 100;
-        if(progress >= 100){
-          progress = 99.99; // we don't set 100 here, if that would be the case for whatever reason. We set 100% only when we combined file and nothing crashed.
-        }else if(progress < 0){
-          progress = 0;
-        }
-        
-        const transferIndex = incomingFileTransfersRef.current.findIndex(
-          transfer => transfer.id === transferID
-        );
-        
-        if (transferIndex !== -1) {
-          incomingFileTransfersRef.current[transferIndex].progress = progress;
-          //console.log(`receiver progress of transfer with ID ${transferID} has been set to ${transferID}.`);
-          
-          // letting know uploader how download progress is going
-          console.log(incomingFileTransfersRef.current[transferIndex].last5updates)
-          sendProgressUpdateMessage(
-            progress,
-            senderPeerId,
-            transferID,
-            connectionsRef.current,
-            incomingFileTransfersRef.current[transferIndex].last5updates
-          );
-
-          forceUpdate()
-        } else {
-          console.log(`No reciver transfer found with ID ${transferID}.`);
-        }
-      }
-      
-      // last chunk received
-      if (currentChunk === totalChunks - 1) {
-        // Sort the received chunks by chunkOrder
-        const beforeSorting = receivedChunks
-        receivedChunks[transferID].chunks.sort((a, b) => a.chunkOrder - b.chunkOrder);
-        if(beforeSorting == receivedChunks){
-          console.log("before sorting chunks they were fine")
-        }else{
-          console.log("before sorting chunks had order issue")
-        }
-      
-        const combinedChunks = receivedChunks[transferID].chunks.map(chunkInfo => chunkInfo.blob);
-        const combinedFile = new Blob(combinedChunks, { type });
-      
-        const downloadLink = URL.createObjectURL(combinedFile);
-      
-        const anchorElement = document.createElement("a");
-        anchorElement.href = downloadLink;
-        anchorElement.download = name;
-        anchorElement.click();
-      
-        URL.revokeObjectURL(downloadLink);
-      
-        // letting the uploader know how download progress is going
-        sendProgressUpdateMessage(
-          100,
-          senderPeerId,
-          transferID,
-          connectionsRef.current,
-          null
-        );
-      
-        // set progress to 100
-        const transferIndex = incomingFileTransfersRef.current.findIndex(
-          transfer => transfer.id === transferID
-        );
-        incomingFileTransfersRef.current[transferIndex].progress = 100;
-        forceUpdate();
-      
-        // Clear chunks for this transfer
-        receivedChunks[transferID].chunks = [];
-      }      
+    if (data.dataType === "FILE_CHUNK") {
+      receiveFileChunk(
+        senderPeerId,
+        data,
+        receivedChunks,
+        incomingFileTransfersRef,
+        connectionsRef,
+        forceUpdate
+      );
     } else if (data.dataType == "TRANSFER_PROGRESS_UPDATE") {
-    
-      // Find the corresponding FileInfo object in the outgoingFileTransfersRef
+
+      // Received progress update from receiver
       const fileInfo = outgoingFileTransfersRef.current.find((file) => file.id === data.transferID);
       if (fileInfo) {
         fileInfo.setPeerProgress(senderPeerId, data.progress, data.last5updates);
         forceUpdate();
       }else{
-        console.log("RECEIVED FAULTY FILE TRANSFER UPDATE")
+        console.warn("RECEIVED FAULTY FILE TRANSFER UPDATE")
       }
 
-    } else if (data.dataType && data.dataType === "FILE_TRANSFER_ACCEPT" && data.id) {
-      console.log("FILE TRANSFER ACCEPT RECEIVED - OTHER PEER ACCEPTED THIS TRANSFER.");
-      const fileIndex = outgoingFileTransfersRef.current.findIndex(file => file.id === data.id);
-      const fileToUpdate = outgoingFileTransfersRef.current[fileIndex];
-      const updatedFile = { ...fileToUpdate };
-  
-      // Edit the properties of the copied object
-      console.log(updatedFile)
-      console.log(outgoingFileTransfersRef.current)
-      const i = updatedFile.receiverPeers.findIndex((user) => user.id === senderPeerId);
-      updatedFile.receiverPeers[i].isAccepted = true;
-  
-      // Update the state with the modified object
-      outgoingFileTransfersRef.current[fileIndex] = updatedFile;
-
-      // chunks go wrrrrrrrr (actual file transfer starts)
-      const connectionData = connectionsRef.current.find((connectionData) => connectionData.peerId === senderPeerId);
-
-      if(updatedFile.selectedFile && connectionData){
-        console.log("SENDING CHUNKS")
-        outgoingFileTransfersRef.current[fileIndex].progress = 0;
-        sendChunksData(updatedFile.selectedFile, connectionData, updatedFile.id, setProgress, outgoingFileTransfersRef)
-        forceUpdate()
-      }else{
-        console.log("BIG ERROR SELECTED FILE IS EMPTY, CANNOT SEND OR CONNECTION DATA IS EMPTY FOR SOME REASON")
-      }
-
-      forceUpdate();
-    } else if (isJsonString(data)) {
-      data = JSON.parse(data);
+    } else if (data.dataType === "FILE_TRANSFER_ACCEPT" && data.id) {
+      receiveFileTransferFileAccept(
+        senderPeerId,
+        data,
+        outgoingFileTransfersRef,
+        connectionsRef,
+        forceUpdate
+      );
+    } else if (data.dataType == "FILE_TRANSFER_OFFER") { // sender chose files, and asks peer for permission to start sending them
       if(data && data.totalChunks && data.size){ // checking if data is valid offer, or at least looks like it
         console.log("file offer json string received ", data)
         let incomingOffer = new FileTransfer(
@@ -237,20 +135,22 @@ const App: React.FC = () => {
           data.type
         );
         incomingOffer.setPeerIDs(senderPeerId, [{id: myPeerId, isAccepted: false, progress: null, last5updates: null}])
-        console.log("got this offer: ", incomingOffer);
         incomingFileTransfersRef.current = [...incomingFileTransfersRef.current, incomingOffer];
         forceUpdate();
       } else if (data.code == "SENDER_CANCELLED_TRANSFER"){
         console.log(data)
         console.log(" DATA RECEIVED SENDER_CANCELLED_TRANSFER")
       }else{
-        console.log("WRONG JSON STRING RECEIVED ", data)
+        console.log("Unknown data.code for received FILE_TRANSFER_OFFER ", data)
       }
 
-    } else {
+    } else if (data.dataType == "CHAT_MESSAGE" && data.text){
+      // Handling usual text chat message
       console.log("Received normal text message:", data);
-      const chatMessage: ChatMessage = { peerId: senderPeerId, message: data };
+      const chatMessage: ChatMessage = { peerId: senderPeerId, message: data.text };
       setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
+    }else{
+      console.warn("received some data with unknown dataType")
     }
   };
 
@@ -282,10 +182,11 @@ const App: React.FC = () => {
   const sendMessage = () => {
     if (messageInput) {
       const chatMessage: ChatMessage = { peerId: myPeerId, message: messageInput };
+      const chatMessageTransfer = { text: messageInput, dataType: "CHAT_MESSAGE" }
       setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
       connectionsRef.current
         .filter((c) => c.peerId !== myPeerId)
-        .forEach((c) => c.connection.send(messageInput));
+        .forEach((c) => c.connection.send(chatMessageTransfer));
       setMessageInput("");
     }
   };
@@ -309,7 +210,9 @@ const App: React.FC = () => {
       // sending data only to selected peers
       connectionsRef.current.forEach((c) => {
         if(targetPeers.includes(c.peerId)){
-          c.connection.send(JSON.stringify(outgoingTransferOffer))
+          let offer: any = JSON.parse(JSON.stringify(outgoingTransferOffer));
+          offer.dataType = "FILE_TRANSFER_OFFER";
+          c.connection.send(offer)
         }
       });
   

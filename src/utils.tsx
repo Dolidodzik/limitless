@@ -45,7 +45,7 @@ export function isJsonString(str: string): boolean {
   return true;
 }
 
-export const sendChunksData = async (file: File, connectionData: ConnectionData, transferID: string, setProgress: Function, ref: React.MutableRefObject<FileTransfer[]>, chunkSize: number = AppConfig.chunkSize) => {
+export const sendChunksData = async (file: File, connectionData: ConnectionData, transferID: string, outgoingFileTransfersRef: RefObject<FileTransfer[]>, chunkSize: number = AppConfig.chunkSize) => {
 
   if (!file){
     console.log("NO FILE SELECTED??? BIG ERROR SOMETHING WENT WRONG.");
@@ -73,27 +73,23 @@ export const sendChunksData = async (file: File, connectionData: ConnectionData,
     
     const doTheSending = async () => {
       connectionData.connection.send(chunk);
-
-      if (currentChunk % 5 === 0) {
-        setProgress(transferID, Math.floor((currentChunk / totalChunks) * 100 * 100) / 100); // * 100 because progress is like this 0.50 means 50%, so to get % value instead of fraction we need * 100. Then *100 and /100, because we are rounding up to 2 decimal places. Rounding down with Math.floor, so it will never be 100, to make 100 we will need to do it explicitly.
-      }
   
       if (currentChunk < totalChunks - 1) {
         currentChunk++;
         loadNextChunk();
-      }else{
-        setProgress(transferID, 100);
       }
     }
 
     const waiter = async() => {
-      const fileInfo = ref.current.find(
+
+      // making sure that outgoingFileTransfersRef exists
+      if (!outgoingFileTransfersRef || !outgoingFileTransfersRef.current){
+        console.log("outgoing file transfer is empty")
+        return;
+      }
+      const fileInfo = outgoingFileTransfersRef.current.find(
         (fileInfo) => fileInfo.id === transferID
       );
-      
-      /*
-      fileInfo?.appendLast5Chunks(currentChunk);
-      */
 
       const userAccepts = fileInfo?.receiverPeers.find(
         (peer) => peer.id === connectionData.peerId

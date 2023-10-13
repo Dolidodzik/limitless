@@ -1,28 +1,34 @@
 
+// in progress
+
+Dealing with offers JSON stringing etc in a better way, when it comes to receiving different kinds of messages
+
+CANCELOWANIE UPLOADU - sender ktory canceluje swoj upload powinien wyslac wiadomosc ze to robi
+BUTTON FOR DECLINING TRANSFER
+pausing given upload
+cancel na kliencie/senderze
+
+
+// todo
+
+ABSTRACT MORE FUNCTIONS / STUFF INTO SEPARATE COMPONENTS
+dissalow user from starting transfer when no receivers are chosen
+
+time left/estimated etc
+
 CLEANUP OVERALL
 
-chunk size as global setting, move more stuff to global settings somewhere
-
-MOVE generateRandomString to class constructor
-CANCELOWANIE UPLOADU
 checking if transferID matches PeerID when receiving each chunk
-Dealing with offers JSON stringing etc in a better way, when it comes to receiving different kinds of messages
 Id vs id vs ID
 math progress validation to utils, generally move as much shit as possible to utils.js
 
 ACTUAL VALIDATION WHAT FILE WE ARE RECEIVING, IF FILE IS 10MB, WE SHOULDNT MORE CHUNKS THAN 10MB DOES IT MAKE SENSE. THINK ABOUT OTHER WAYS MALICIOUS ACTORS COULD TRY TO EXPLOIT PEER 2 PEER CONNECTION, THINK ABOUT USERS SAFETY
 
-time left/estimated etc
-
-BUTTON FOR DECLINING TRANSFER
 cleanup console.logs and shit
 LINTING
-There shouldn't be cancel transfer button, when 
 NICKNAMES ZAMIAST ZJEBANYCH ID
 Id vs id vs ID
-pausing upload for given user
 zwracanie jakis bledow jak plik jest pusty itd
 adding more functions to FileInfo can make things easier
-czyszczenie transferow przy cancelu zeby zwolnic ram?
-podzielenie FileInfo na 2 klasy dziedziczace z tego samego, rozniace sie tym czym maja sie roznic
-cancel na kliencie/senderze
+
+
