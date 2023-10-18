@@ -1,14 +1,16 @@
 
 // in progress
 
-BUTTON FOR DECLINING TRANSFER
-pausing given upload
-cancel na kliencie/senderze
+
+ABSTRACT MORE FUNCTIONS / STUFF INTO SEPARATE COMPONENTS
+dzielenie wszystkiego do osobnych funkcji jakis malych itd itd - usuwanie czegos po indexie, wysylwanie X do wszystkich peerow, wysylwanie Y po indexie itd itd
+
 
 
 // todo
 
-ABSTRACT MORE FUNCTIONS / STUFF INTO SEPARATE COMPONENTS
+pausing given upload
+
 dissalow user from starting transfer when no receivers are chosen
 
 time left/estimated etc
@@ -27,5 +29,4 @@ NICKNAMES ZAMIAST ZJEBANYCH ID
 Id vs id vs ID
 zwracanie jakis bledow jak plik jest pusty itd
 adding more functions to FileInfo can make things easier
-
-
+czyszczenie komentarzy

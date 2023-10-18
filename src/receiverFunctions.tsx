@@ -10,37 +10,28 @@ import { AppGlobals } from './globals';
 export function receiveFileTransferFileAccept(
     senderPeerId: string,
     data: any,
-    outgoingFileTransfersRef: RefObject<FileTransfer[]>,
-    connectionsRef: RefObject<ConnectionData[]>,
     forceUpdate: () => void
 ){ 
 
-    if(!outgoingFileTransfersRef || !outgoingFileTransfersRef.current || !connectionsRef || !connectionsRef.current){
-        console.error("receiveFileChunk() got empty file transfers / connection ref")
-        return;
-    }
-
     console.log("FILE TRANSFER ACCEPT RECEIVED - OTHER PEER ACCEPTED THIS TRANSFER.");
-    const fileIndex = outgoingFileTransfersRef.current.findIndex(file => file.id === data.id);
-    const fileToUpdate = outgoingFileTransfersRef.current[fileIndex];
+    const fileIndex = AppGlobals.outgoingFileTransfers.findIndex(file => file.id === data.id);
+    const fileToUpdate = AppGlobals.outgoingFileTransfers[fileIndex];
     const updatedFile = { ...fileToUpdate };
 
     // Edit the properties of the copied object
-    console.log(updatedFile)
-    console.log(outgoingFileTransfersRef.current)
     const i = updatedFile.receiverPeers.findIndex((user) => user.id === senderPeerId);
     updatedFile.receiverPeers[i].isAccepted = true;
 
     // Update the state with the modified object
-    outgoingFileTransfersRef.current[fileIndex] = updatedFile;
+    AppGlobals.outgoingFileTransfers[fileIndex] = updatedFile;
 
     // chunks go wrrrrrrrr (actual file transfer starts)
-    const connectionData = connectionsRef.current.find((connectionData) => connectionData.peerId === senderPeerId);
+    const connectionData = AppGlobals.connections.find((connectionData) => connectionData.peerId === senderPeerId);
 
     if(updatedFile.selectedFile && connectionData){
         console.log("SENDING CHUNKS")
-        outgoingFileTransfersRef.current[fileIndex].progress = 0;
-        sendChunksData(updatedFile.selectedFile, connectionData, updatedFile.id, outgoingFileTransfersRef)
+        AppGlobals.outgoingFileTransfers[fileIndex].progress = 0;
+        sendChunksData(updatedFile.selectedFile, connectionData, updatedFile.id)
         forceUpdate()
     }else{
         console.log("BIG ERROR SELECTED FILE IS EMPTY, CANNOT SEND OR CONNECTION DATA IS EMPTY FOR SOME REASON")
@@ -54,15 +45,8 @@ export function receiveFileTransferFileAccept(
 export function receiveFileChunk(
         senderPeerId: string, 
         data: any, 
-        incomingFileTransfersRef: RefObject<FileTransfer[]>,
-        connectionsRef: RefObject<ConnectionData[]>,
         forceUpdate: () => void
     ){ 
-
-    if(!incomingFileTransfersRef || !incomingFileTransfersRef.current || !connectionsRef || !connectionsRef.current){
-        console.error("receiveFileChunk() got empty file transfers / received chunks / connection data ref")
-        return;
-    }
 
     //console.log("RECEIVED FILE_CHUNK", data);
     const { chunk, currentChunk, totalChunks, name, type, transferID, chunkOrder } = data;
@@ -89,22 +73,20 @@ export function receiveFileChunk(
             progress = 0;
         }
 
-        const transferIndex = incomingFileTransfersRef.current.findIndex(
+        const transferIndex = AppGlobals.incomingFileTransfers.findIndex(
             transfer => transfer.id === transferID
         );
 
         if (transferIndex !== -1) {
-            incomingFileTransfersRef.current[transferIndex].progress = progress;
+            AppGlobals.incomingFileTransfers[transferIndex].progress = progress;
             //console.log(`receiver progress of transfer with ID ${transferID} has been set to ${transferID}.`);
             
             // letting know uploader how download progress is going
-            console.log(incomingFileTransfersRef.current[transferIndex].last5updates)
             sendProgressUpdateMessage(
                 progress,
                 senderPeerId,
                 transferID,
-                connectionsRef.current,
-                incomingFileTransfersRef.current[transferIndex].last5updates
+                AppGlobals.incomingFileTransfers[transferIndex].last5updates
             );
 
             forceUpdate()
@@ -141,15 +123,14 @@ export function receiveFileChunk(
             100,
             senderPeerId,
             transferID,
-            connectionsRef.current,
             null
         );
 
         // set progress to 100
-        const transferIndex = incomingFileTransfersRef.current.findIndex(
+        const transferIndex = AppGlobals.incomingFileTransfers.findIndex(
             transfer => transfer.id === transferID
         );
-        incomingFileTransfersRef.current[transferIndex].progress = 100;
+        AppGlobals.incomingFileTransfers[transferIndex].progress = 100;
         forceUpdate();
 
         // Clear chunks for this transfer

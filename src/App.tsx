@@ -1,8 +1,8 @@
 import React, { useEffect, useState, ChangeEvent, useRef } from "react";
 import Peer from "peerjs";
-import { ChatMessage, ConnectionData, userAccepts, progressUpdateMessage,chunkProgress } from './interfaces'
+import { ChatMessage, ConnectionData, userAccepts } from './interfaces'
 import { ChatRenderer, generateRandomString, calculateTotalChunks, isJsonString, transferProgress, dealWithTransferProgressUpdates } from './utils';
-import { FileTransfer, senderCancelTransferMessage, receiverCancelTransferMessage } from './classes';
+import { FileTransfer, senderCancelTransferMessage } from './classes';
 import { AppConfig } from './config';
 import { receiveFileChunk, receiveFileTransferFileAccept } from './receiverFunctions';
 import { AppGlobals } from './globals';
@@ -20,18 +20,12 @@ const App: React.FC = () => {
 
   const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 
-  const connectionsRef = useRef<ConnectionData[]>([]);
-  const outgoingFileTransfersRef = useRef<FileTransfer[]>([]);
-  const incomingFileTransfersRef = useRef<FileTransfer[]>([]);
-
   const [chatLogs, setChatLogs] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
     const newPeer = new Peer();
     const progressUpdatesInterval = setInterval(() => 
-    dealWithTransferProgressUpdates(
-      incomingFileTransfersRef)
-    , AppConfig.transferProgressUpdatesInterval);
+    dealWithTransferProgressUpdates(), AppConfig.transferProgressUpdatesInterval);
 
 
     newPeer.on("open", (id) => {
@@ -45,7 +39,7 @@ const App: React.FC = () => {
           connection: conn,
           peerId: conn.peer,
         };
-        connectionsRef.current = [...connectionsRef.current, newConnectionData];
+        AppGlobals.connections.push(newConnectionData);
         addSystemMessage("Connection established with: " + conn.peer)
       });
 
@@ -54,14 +48,16 @@ const App: React.FC = () => {
       });
 
       conn.on("close", () => {
-        connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== conn.peer);
+        // removing connection
+        const indexToRemove = AppGlobals.connections.findIndex(c => c.peerId === conn.peer);
+        if (indexToRemove !== -1) { AppGlobals.connections.splice(indexToRemove, 1); }
         addSystemMessage("Connection closed with: " + conn.peer)
       });
     });
 
     return () => {
-      connectionsRef.current.forEach((c) => c.connection.close());
-      connectionsRef.current = [];
+      AppGlobals.connections.forEach((c) => c.connection.close());
+      AppGlobals.connections.splice(0, AppGlobals.connections.length);
       setChatLogs([]);
       newPeer.disconnect();
       newPeer.destroy();
@@ -80,13 +76,11 @@ const App: React.FC = () => {
       receiveFileChunk(
         senderPeerId,
         data,
-        incomingFileTransfersRef,
-        connectionsRef,
         forceUpdate
       );
     } else if (data.dataType == "TRANSFER_PROGRESS_UPDATE") {
       // Received progress update from receiver
-      const fileInfo = outgoingFileTransfersRef.current.find((file) => file.id === data.transferID);
+      const fileInfo = AppGlobals.outgoingFileTransfers.find((file) => file.id === data.transferID);
       if (fileInfo) {
         fileInfo.setPeerProgress(senderPeerId, data.progress, data.last5updates);
         forceUpdate();
@@ -97,8 +91,6 @@ const App: React.FC = () => {
       receiveFileTransferFileAccept(
         senderPeerId,
         data,
-        outgoingFileTransfersRef,
-        connectionsRef,
         forceUpdate
       );
     } else if (data.dataType == "FILE_TRANSFER_OFFER") { // sender chose files, and asks peer for permission to start sending them
@@ -112,7 +104,7 @@ const App: React.FC = () => {
           data.type
         );
         incomingOffer.setPeerIDs(senderPeerId, [{id: myPeerId, isAccepted: false, progress: null, last5updates: null}])
-        incomingFileTransfersRef.current = [...incomingFileTransfersRef.current, incomingOffer];
+        AppGlobals.incomingFileTransfers.push(incomingOffer);
         forceUpdate();
       }
     } else if (data.dataType == "CHAT_MESSAGE" && data.text){
@@ -137,7 +129,7 @@ const App: React.FC = () => {
           connection: conn,
           peerId: conn.peer,
         };
-        connectionsRef.current = [...connectionsRef.current, newConnectionData];
+        AppGlobals.connections.push(newConnectionData)
         addSystemMessage("Connection established with: " + conn.peer)
       });
 
@@ -146,7 +138,9 @@ const App: React.FC = () => {
       });
 
       conn.on("close", () => {
-        connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== conn.peer);
+        // removing connection
+        const indexToRemove = AppGlobals.connections.findIndex(c => c.peerId === conn.peer);
+        if (indexToRemove !== -1) { AppGlobals.connections.splice(indexToRemove, 1); }
         addSystemMessage("Connection closed with: " + conn.peer)
       });
     }
@@ -157,7 +151,7 @@ const App: React.FC = () => {
       const chatMessage: ChatMessage = { peerId: myPeerId, message: messageInput };
       const chatMessageTransfer = { text: messageInput, dataType: "CHAT_MESSAGE" }
       setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
-      connectionsRef.current
+      AppGlobals.connections
         .filter((c) => c.peerId !== myPeerId)
         .forEach((c) => c.connection.send(chatMessageTransfer));
       setMessageInput("");
@@ -181,7 +175,7 @@ const App: React.FC = () => {
       )
       
       // sending data only to selected peers
-      connectionsRef.current.forEach((c) => {
+      AppGlobals.connections.forEach((c) => {
         if(targetPeers.includes(c.peerId)){
           let offer: any = JSON.parse(JSON.stringify(outgoingTransferOffer));
           offer.dataType = "FILE_TRANSFER_OFFER";
@@ -193,7 +187,7 @@ const App: React.FC = () => {
       const connectedPeerIDs: userAccepts[] = targetPeers.map(targetPeerID => ({ id: targetPeerID, isAccepted: false, progress: null, last5updates: null }));
       
       outgoingTransferOffer.setPeerIDs(myPeerId, connectedPeerIDs);
-      outgoingFileTransfersRef.current = [...outgoingFileTransfersRef.current, outgoingTransferOffer];
+      AppGlobals.outgoingFileTransfers.push(outgoingTransferOffer)
       forceUpdate();
     });
   }
@@ -212,8 +206,8 @@ const App: React.FC = () => {
   };
 
   const resetConnection = () => {
-    connectionsRef.current.forEach((c) => c.connection.close());
-    connectionsRef.current = [];
+    AppGlobals.connections.forEach((c) => c.connection.close());
+    AppGlobals.connections.splice(0, AppGlobals.connections.length);
     setChatLogs([]);
     forceUpdate();
   };
@@ -225,19 +219,20 @@ const App: React.FC = () => {
 
   const disconnectFromSelectedClient = (peerId: string) => {
     // closing connection with unwanted peer
-    connectionsRef.current.forEach((c) => {
+    AppGlobals.connections.forEach((c) => {
       if(c.peerId === peerId)
         c.connection.close()
     });
     
-    // removing unwanted peer from connections ref
-    connectionsRef.current = connectionsRef.current.filter((c) => c.peerId !== peerId);
+    // removing unwanted peer from connections 
+    const indexToRemove = AppGlobals.connections.findIndex(c => c.peerId === peerId);
+    if (indexToRemove !== -1) { AppGlobals.connections.splice(indexToRemove, 1); }
     forceUpdate();
   }
 
   const acceptTransfer = (id: string) => {
-    const fileIndex = incomingFileTransfersRef.current.findIndex(file => file.id === id);
-    const fileToUpdate = incomingFileTransfersRef.current[fileIndex];
+    const fileIndex = AppGlobals.incomingFileTransfers.findIndex(file => file.id === id);
+    const fileToUpdate = AppGlobals.incomingFileTransfers[fileIndex];
     const updatedFile = { ...fileToUpdate };
 
     // Edit the properties of the copied object
@@ -249,11 +244,11 @@ const App: React.FC = () => {
       id: updatedFile.id 
     }
 
-    connectionsRef.current
+    AppGlobals.connections
     .filter((c) => c.peerId === updatedFile.senderPeerID)
     .forEach((c) => c.connection.send(info));
 
-    incomingFileTransfersRef.current[fileIndex] = updatedFile;
+    AppGlobals.incomingFileTransfers[fileIndex] = updatedFile;
     forceUpdate();
   }
 
@@ -273,23 +268,25 @@ const App: React.FC = () => {
   };
 
   const deleteOutgoingTransfer = (transferID: string) => {
-    const transferIndex = outgoingFileTransfersRef.current.findIndex(
+    const transferIndex = AppGlobals.outgoingFileTransfers.findIndex(
       transfer => transfer.id === transferID
     );
     
-    const transferPeers = outgoingFileTransfersRef.current[transferIndex].receiverPeers.map(peer => peer.id)
+    const transferPeers = AppGlobals.outgoingFileTransfers[transferIndex].receiverPeers.map(peer => peer.id)
 
     // sending data only to peers that are receiving this file transfer
-    connectionsRef.current.forEach((c) => {
+    AppGlobals.connections.forEach((c) => {
       if(transferPeers.includes(c.peerId)){
         let cancelMessage = JSON.parse(JSON.stringify(new senderCancelTransferMessage(transferID)))
         c.connection.send(cancelMessage)
       }
     });
 
-    outgoingFileTransfersRef.current = outgoingFileTransfersRef.current.filter(
-      fileInfo => fileInfo.id !== transferID
-    );
+    const indexToDelete = AppGlobals.outgoingFileTransfers.findIndex(fileInfo => fileInfo.id === transferID);
+    if (indexToDelete !== -1) {
+      AppGlobals.outgoingFileTransfers.splice(indexToDelete, 1);
+    }
+    
     forceUpdate();
   }
 
@@ -299,10 +296,10 @@ const App: React.FC = () => {
 
       {myPeerId && <h2>Your peer ID is: {myPeerId}</h2>}
 
-      {connectionsRef.current.length > 0 ? (
+      {AppGlobals.connections.length > 0 ? (
         <div>
           <h1>Connected to Peers:</h1>
-          {connectionsRef.current.map((connection) => (
+          {AppGlobals.connections.map((connection) => (
             <div key={connection.peerId}> * {connection.peerId} 
               <button onClick={() => disconnectFromSelectedClient(connection.peerId)}> disconnect </button> 
               <div> 
@@ -331,7 +328,7 @@ const App: React.FC = () => {
           <h2> File transfers: </h2>
           <br/>
           <h3>  Incoming: </h3>
-          {incomingFileTransfersRef.current.map((transfer) => (
+          {AppGlobals.incomingFileTransfers.map((transfer) => (
             <div key={transfer.id} className="box"> 
               * <b>{transfer.id}</b> from <b>{transfer.senderPeerID}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks.
               <br/>
@@ -351,7 +348,7 @@ const App: React.FC = () => {
           ))}
 
           <h3>  Outgoing: </h3>
-          {outgoingFileTransfersRef.current.map((transfer) => (
+          {AppGlobals.outgoingFileTransfers.map((transfer) => (
             <div key={transfer.id} className="box"> 
               * <b>{transfer.id}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks. <br/> 
               

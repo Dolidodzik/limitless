@@ -47,7 +47,9 @@ export function isJsonString(str: string): boolean {
   return true;
 }
 
-export const sendChunksData = async (file: File, connectionData: ConnectionData, transferID: string, outgoingFileTransfersRef: RefObject<FileTransfer[]>, chunkSize: number = AppConfig.chunkSize) => {
+export const sendChunksData = async (file: File, connectionData: ConnectionData, transferID: string) => {
+
+  const chunkSize: number = AppConfig.chunkSize;
 
   if (!file){
     console.log("NO FILE SELECTED??? BIG ERROR SOMETHING WENT WRONG.");
@@ -84,12 +86,7 @@ export const sendChunksData = async (file: File, connectionData: ConnectionData,
 
     const waiter = async() => {
 
-      // making sure that outgoingFileTransfersRef exists
-      if (!outgoingFileTransfersRef || !outgoingFileTransfersRef.current){
-        console.log("outgoing file transfer is empty")
-        return;
-      }
-      const fileInfo = outgoingFileTransfersRef.current.find(
+      const fileInfo = AppGlobals.outgoingFileTransfers.find(
         (fileInfo) => fileInfo.id === transferID
       );
 
@@ -125,7 +122,7 @@ export const sendChunksData = async (file: File, connectionData: ConnectionData,
   }
 };
 
-export function sendProgressUpdateMessage(progress: number, senderPeerId: string, transferID: string, connectionsRef: ConnectionData[], last5updates: chunkProgress[] | null){ // chunk progress can be null, because if it's just null then it means that we want to set speed to 0 and that's it
+export function sendProgressUpdateMessage(progress: number, senderPeerId: string, transferID: string, last5updates: chunkProgress[] | null){ // chunk progress can be null, because if it's just null then it means that we want to set speed to 0 and that's it
 
   const progressUpdate: progressUpdateMessage = {
     progress: progress,
@@ -135,7 +132,7 @@ export function sendProgressUpdateMessage(progress: number, senderPeerId: string
   }
 
   // sending progress update to the sender
-  connectionsRef
+  AppGlobals.connections
   .filter((c) => c.peerId === senderPeerId)
   .forEach((c) => c.connection.send(progressUpdate));
 }
@@ -164,18 +161,13 @@ export function transferProgress(last5chunks: chunkProgress[] | null, progress: 
 }
 
 // should be called every 500ms. This function loops over every transfer, and checks how progress is going
-export function dealWithTransferProgressUpdates(
-  incomingFileTransfersRef: RefObject<FileTransfer[]>
-){
-  
-  if (incomingFileTransfersRef && incomingFileTransfersRef.current) {
-    incomingFileTransfersRef.current.forEach((fileTransfer) => {
-      let chunks = 0;
-      if(AppGlobals.receivedChunks[fileTransfer.id] && AppGlobals.receivedChunks[fileTransfer.id].chunks){
-        chunks = AppGlobals.receivedChunks[fileTransfer.id].chunks.length
-      }
-      fileTransfer.appendLast5Chunks(chunks)
-      console.log(fileTransfer.last5updates)
-    });
-  }
+export function dealWithTransferProgressUpdates(){
+  AppGlobals.incomingFileTransfers.forEach((fileTransfer) => {
+    let chunks = 0;
+    if(AppGlobals.receivedChunks[fileTransfer.id] && AppGlobals.receivedChunks[fileTransfer.id].chunks){
+      chunks = AppGlobals.receivedChunks[fileTransfer.id].chunks.length
+    }
+    fileTransfer.appendLast5Chunks(chunks)
+    console.log(fileTransfer.last5updates)
+  });
 }
