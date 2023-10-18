@@ -3,6 +3,8 @@ import { RefObject } from 'react';
 import { FileTransfer } from './classes'; 
 import { sendProgressUpdateMessage, sendChunksData } from './utils';
 import { ConnectionData } from './interfaces';
+import { AppGlobals } from './globals';
+
 
 // FILE_TRANSFER_ACCEPT - receiver got the FILE_TRANSFER_OFFER, and now sends back message which is greenlighting sender to actually start sending chunks
 export function receiveFileTransferFileAccept(
@@ -52,13 +54,12 @@ export function receiveFileTransferFileAccept(
 export function receiveFileChunk(
         senderPeerId: string, 
         data: any, 
-        receivedChunks: RefObject<blobDict>, 
         incomingFileTransfersRef: RefObject<FileTransfer[]>,
         connectionsRef: RefObject<ConnectionData[]>,
         forceUpdate: () => void
     ){ 
 
-    if(!incomingFileTransfersRef || !incomingFileTransfersRef.current || !receivedChunks || !receivedChunks.current || !connectionsRef || !connectionsRef.current){
+    if(!incomingFileTransfersRef || !incomingFileTransfersRef.current || !connectionsRef || !connectionsRef.current){
         console.error("receiveFileChunk() got empty file transfers / received chunks / connection data ref")
         return;
     }
@@ -68,20 +69,20 @@ export function receiveFileChunk(
     const chunkData = new Uint8Array(chunk);
     const fileChunk = new Blob([chunkData], { type });
 
-    // if there isn't transfer with that ID in blob list, then add it
-    if (!receivedChunks.current[transferID]) {
-        receivedChunks.current[transferID] = {
+    // if there isn't transfer with that ID in blob list, then add it 
+    if (!AppGlobals.receivedChunks[transferID]) {
+        AppGlobals.receivedChunks[transferID] = {
             chunks: [],
         };
     }
 
-    receivedChunks.current[transferID].chunks.push({
+    AppGlobals.receivedChunks[transferID].chunks.push({
         blob: fileChunk,
         chunkOrder: chunkOrder,
     });
 
-    if (receivedChunks.current[transferID].chunks.length % 10 === 0) {
-        let progress = Math.floor((receivedChunks.current[transferID].chunks.length / totalChunks) * 100 * 100) / 100;
+    if (AppGlobals.receivedChunks[transferID].chunks.length % 10 === 0) {
+        let progress = Math.floor((AppGlobals.receivedChunks[transferID].chunks.length / totalChunks) * 100 * 100) / 100;
         if(progress >= 100){
             progress = 99.99; // we don't set 100 here, if that would be the case for whatever reason. We set 100% only when we combined file and nothing crashed.
         }else if(progress < 0){
@@ -115,15 +116,15 @@ export function receiveFileChunk(
     // last chunk received
     if (currentChunk === totalChunks - 1) {
         // Sort the received chunks by chunkOrder
-        const beforeSorting = receivedChunks
-        receivedChunks.current[transferID].chunks.sort((a, b) => a.chunkOrder - b.chunkOrder);
-        if(beforeSorting == receivedChunks){
+        const beforeSorting = AppGlobals.receivedChunks
+        AppGlobals.receivedChunks[transferID].chunks.sort((a, b) => a.chunkOrder - b.chunkOrder);
+        if(beforeSorting == AppGlobals.receivedChunks){
             console.log("before sorting chunks they were fine")
         }else{
             console.log("before sorting chunks had order issue")
         }
 
-        const combinedChunks = receivedChunks.current[transferID].chunks.map(chunkInfo => chunkInfo.blob);
+        const combinedChunks = AppGlobals.receivedChunks[transferID].chunks.map(chunkInfo => chunkInfo.blob);
         const combinedFile = new Blob(combinedChunks, { type });
 
         const downloadLink = URL.createObjectURL(combinedFile);
@@ -152,6 +153,6 @@ export function receiveFileChunk(
         forceUpdate();
 
         // Clear chunks for this transfer
-        receivedChunks.current[transferID].chunks = [];
+        AppGlobals.receivedChunks[transferID].chunks = [];
     }    
 }

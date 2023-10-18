@@ -1,9 +1,6 @@
 
 // in progress
 
-Dealing with offers JSON stringing etc in a better way, when it comes to receiving different kinds of messages
-
-CANCELOWANIE UPLOADU - sender ktory canceluje swoj upload powinien wyslac wiadomosc ze to robi
 BUTTON FOR DECLINING TRANSFER
 pausing given upload
 cancel na kliencie/senderze

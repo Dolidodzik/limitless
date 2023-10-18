@@ -5,22 +5,24 @@ import { ChatMessage, ConnectionData, progressUpdateMessage, chunkProgress } fro
 import { blobDict } from './types';
 import { FileTransfer } from './classes'; 
 import { AppConfig } from './config';
+import { AppGlobals } from './globals';
+
 
 export function ChatRenderer(chatLogs: ChatMessage[], ownId: string) {
-    return (
-      <div>
-        <h2>Chat logs:</h2>
-        {chatLogs.map((message, index) => (
-          <div
-            key={index}
-            style={{ textAlign: message.peerId === ownId ? 'right' : 'left' }}
-          >
-            <b>{index}. {message.peerId}:</b> {message.message}
-          </div>
-        ))}
-      </div>
-    );
-  }
+  return (
+    <div>
+      <h2>Chat logs:</h2>
+      {chatLogs.map((message, index) => (
+        <div
+          key={index}
+          style={{ textAlign: message.peerId === ownId ? 'right' : 'left' }}
+        >
+          <b>{index}. {message.peerId}:</b> {message.message}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function generateRandomString(length: number): string {
   const characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -163,14 +165,14 @@ export function transferProgress(last5chunks: chunkProgress[] | null, progress: 
 
 // should be called every 500ms. This function loops over every transfer, and checks how progress is going
 export function dealWithTransferProgressUpdates(
-  receivedChunks: blobDict,
   incomingFileTransfersRef: RefObject<FileTransfer[]>
 ){
+  
   if (incomingFileTransfersRef && incomingFileTransfersRef.current) {
     incomingFileTransfersRef.current.forEach((fileTransfer) => {
       let chunks = 0;
-      if(receivedChunks[fileTransfer.id] && receivedChunks[fileTransfer.id].chunks){
-        chunks = receivedChunks[fileTransfer.id].chunks.length
+      if(AppGlobals.receivedChunks[fileTransfer.id] && AppGlobals.receivedChunks[fileTransfer.id].chunks){
+        chunks = AppGlobals.receivedChunks[fileTransfer.id].chunks.length
       }
       fileTransfer.appendLast5Chunks(chunks)
       console.log(fileTransfer.last5updates)

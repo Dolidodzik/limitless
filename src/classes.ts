@@ -11,7 +11,6 @@ export class FileTransfer implements FileInfoInterface {
       readonly selectedFile: File | null = null, // only sender needs it, just to keep track of what file he needs to send   
       public senderPeerID: string | null = null,
       public receiverPeers: userAccepts[] = [],
-      public cancelled: boolean = false, 
       
       // only receiver uses those
       public progress: number | null = null, 
@@ -41,7 +40,6 @@ export class FileTransfer implements FileInfoInterface {
       if (peerIndex !== -1) {
         this.receiverPeers[peerIndex].progress = progress;
         this.receiverPeers[peerIndex].last5updates = last5updates;
-        console.log("PEER UPDATE with this", last5updates);
       }
     }
 
@@ -50,6 +48,12 @@ export class FileTransfer implements FileInfoInterface {
 export class senderCancelTransferMessage {
   constructor(
     readonly transferID: string,
-    readonly messageCode: string = "SENDER_CANCELLED_TRANSFER",
+    readonly dataType: string = "SENDER_CANCELLED_TRANSFER"
+  ) {}
+}
+export class receiverCancelTransferMessage {
+  constructor(
+    readonly transferID: string,
+    readonly dataType: string = "RECEIVER_CANCELLED_TRANSFER"
   ) {}
 }

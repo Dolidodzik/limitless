@@ -2,10 +2,12 @@ import React, { useEffect, useState, ChangeEvent, useRef } from "react";
 import Peer from "peerjs";
 import { ChatMessage, ConnectionData, userAccepts, progressUpdateMessage,chunkProgress } from './interfaces'
 import { ChatRenderer, generateRandomString, calculateTotalChunks, isJsonString, transferProgress, dealWithTransferProgressUpdates } from './utils';
-import { FileTransfer, senderCancelTransferMessage } from './classes';
-import { blobDict } from './types';
+import { FileTransfer, senderCancelTransferMessage, receiverCancelTransferMessage } from './classes';
 import { AppConfig } from './config';
 import { receiveFileChunk, receiveFileTransferFileAccept } from './receiverFunctions';
+import { AppGlobals } from './globals';
+
+
 
 const App: React.FC = () => {
   const [peer, setPeer] = useState<Peer | null>(null);
@@ -18,36 +20,16 @@ const App: React.FC = () => {
 
   const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 
-  const receivedChunks = useRef<blobDict>({});
-
   const connectionsRef = useRef<ConnectionData[]>([]);
   const outgoingFileTransfersRef = useRef<FileTransfer[]>([]);
   const incomingFileTransfersRef = useRef<FileTransfer[]>([]);
 
   const [chatLogs, setChatLogs] = useState<ChatMessage[]>([]);
 
-  const setProgress = (transferID: string, progress: number) => {
-    if(progress > 100){
-      progress = 100;
-    }else if(progress < 0){
-      progress = 0;
-    }
-    
-    const transferIndex = outgoingFileTransfersRef.current.findIndex(
-      transfer => transfer.id === transferID
-    );
-    
-    if (transferIndex !== -1) {
-      outgoingFileTransfersRef.current[transferIndex].progress = progress;
-      forceUpdate()
-    }
-  }
-
   useEffect(() => {
     const newPeer = new Peer();
     const progressUpdatesInterval = setInterval(() => 
     dealWithTransferProgressUpdates(
-      receivedChunks.current, 
       incomingFileTransfersRef)
     , AppConfig.transferProgressUpdatesInterval);
 
@@ -89,24 +71,20 @@ const App: React.FC = () => {
 
   const handleReceivedData = (data: any, senderPeerId: string) => {
     
-    /*
     if(!data || !data.dataType){
       console.warn("Received some data with nonexistent dataType property")
       return;
     }
-    */
 
     if (data.dataType === "FILE_CHUNK") {
       receiveFileChunk(
         senderPeerId,
         data,
-        receivedChunks,
         incomingFileTransfersRef,
         connectionsRef,
         forceUpdate
       );
     } else if (data.dataType == "TRANSFER_PROGRESS_UPDATE") {
-
       // Received progress update from receiver
       const fileInfo = outgoingFileTransfersRef.current.find((file) => file.id === data.transferID);
       if (fileInfo) {
@@ -115,7 +93,6 @@ const App: React.FC = () => {
       }else{
         console.warn("RECEIVED FAULTY FILE TRANSFER UPDATE")
       }
-
     } else if (data.dataType === "FILE_TRANSFER_ACCEPT" && data.id) {
       receiveFileTransferFileAccept(
         senderPeerId,
@@ -137,19 +114,15 @@ const App: React.FC = () => {
         incomingOffer.setPeerIDs(senderPeerId, [{id: myPeerId, isAccepted: false, progress: null, last5updates: null}])
         incomingFileTransfersRef.current = [...incomingFileTransfersRef.current, incomingOffer];
         forceUpdate();
-      } else if (data.code == "SENDER_CANCELLED_TRANSFER"){
-        console.log(data)
-        console.log(" DATA RECEIVED SENDER_CANCELLED_TRANSFER")
-      }else{
-        console.log("Unknown data.code for received FILE_TRANSFER_OFFER ", data)
       }
-
     } else if (data.dataType == "CHAT_MESSAGE" && data.text){
       // Handling usual text chat message
       console.log("Received normal text message:", data);
       const chatMessage: ChatMessage = { peerId: senderPeerId, message: data.text };
       setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
-    }else{
+    } else if (data.dataType == "SENDER_CANCELLED_TRANSFER"){ // sender is letting know that he cancelled the transfer
+      // handle transfer being canclled somehow - transfer is effectively over, it can be deleted or kept alive just to let end user know what happened with it 
+    } else {
       console.warn("received some data with unknown dataType")
     }
   };
@@ -299,28 +272,21 @@ const App: React.FC = () => {
     });
   };
 
-  const senderCancelTransfer = (transferID: string) => {
+  const deleteOutgoingTransfer = (transferID: string) => {
     const transferIndex = outgoingFileTransfersRef.current.findIndex(
       transfer => transfer.id === transferID
     );
     
     const transferPeers = outgoingFileTransfersRef.current[transferIndex].receiverPeers.map(peer => peer.id)
 
-    // sending data only to selected peers
+    // sending data only to peers that are receiving this file transfer
     connectionsRef.current.forEach((c) => {
       if(transferPeers.includes(c.peerId)){
-        c.connection.send(JSON.stringify(new senderCancelTransferMessage(transferID)))
+        let cancelMessage = JSON.parse(JSON.stringify(new senderCancelTransferMessage(transferID)))
+        c.connection.send(cancelMessage)
       }
     });
 
-    // change transfer on THIS peer to cancelled
-    if (transferIndex !== -1) {
-      outgoingFileTransfersRef.current[transferIndex].cancelled = true;
-    }
-    forceUpdate();
-  }
-
-  const deleteOutgoingTransfer = (transferID: string) => {
     outgoingFileTransfersRef.current = outgoingFileTransfersRef.current.filter(
       fileInfo => fileInfo.id !== transferID
     );
@@ -388,14 +354,9 @@ const App: React.FC = () => {
           {outgoingFileTransfersRef.current.map((transfer) => (
             <div key={transfer.id} className="box"> 
               * <b>{transfer.id}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks. <br/> 
-              <b> (DEBUG INFO) Chunking progress (not actual upload progress, just information about how many chunks were produced here, on sender machine): {transfer.progress} </b> <br/> 
               
-              {transfer.cancelled ? 
-                <span> you cancelled this transfer. Do you want to delete it from here all together? <button onClick={() => deleteOutgoingTransfer(transfer.id)}> YES </button> </span>
-                : 
-                <button onClick={() => senderCancelTransfer(transfer.id)}> CANCEL THIS TRANSFER </button>
-              }
-              
+              <button onClick={() => deleteOutgoingTransfer(transfer.id)}> Delete this transfer </button> 
+
               To peers:
               {transfer.receiverPeers.map((receiver) => (
                 <div key={receiver.id}> 
