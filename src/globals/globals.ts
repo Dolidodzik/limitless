@@ -1,6 +1,6 @@
-import { blobDict } from '../types';
-import { FileTransfer } from '../classes';
-import { ConnectionData } from '../interfaces';
+import { blobDict } from '../dataStructures/types';
+import { FileTransfer } from '../dataStructures/classes';
+import { ConnectionData } from '../dataStructures/interfaces';
 
 export namespace AppGlobals {
     export const receivedChunks: blobDict = {};

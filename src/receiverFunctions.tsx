@@ -1,6 +1,6 @@
-import { FileTransfer } from './classes'; 
+import { FileTransfer } from './dataStructures/classes'; 
 import { sendProgressUpdateMessage, sendChunksData } from './utils';
-import { ChatMessage } from './interfaces';
+import { ChatMessage } from './dataStructures/interfaces';
 import { AppGlobals } from './globals/globals';
 
 

@@ -5,7 +5,7 @@
 ABSTRACT MORE FUNCTIONS / STUFF INTO SEPARATE COMPONENTS
 dzielenie wszystkiego do osobnych funkcji jakis malych itd itd - usuwanie czegos po indexie, wysylwanie X do wszystkich peerow, wysylwanie Y po indexie itd itd
 
-
+potencjal na wyjebanie peer / my peer id etc i poleganie na zczytywaniu tego z obietku?
 
 // todo
 
@@ -16,6 +16,8 @@ dissalow user from starting transfer when no receivers are chosen
 time left/estimated etc
 
 CLEANUP OVERALL
+
+handling resets (clearing transfers history etc, dealing with stuff like one peer being left alone in the room - what do we do with previous messages? do we reset room by default? etc)
 
 checking if transferID matches PeerID when receiving each chunk
 Id vs id vs ID

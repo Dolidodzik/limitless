@@ -1,18 +1,19 @@
 import React, { useEffect, useState, ChangeEvent, useRef } from "react";
 import Peer from "peerjs";
-import { ChatMessage, ConnectionData, userAccepts } from './interfaces'
-import { ChatRenderer, generateRandomString, calculateTotalChunks, isJsonString, transferProgress, dealWithTransferProgressUpdates } from './utils';
-import { FileTransfer, senderCancelTransferMessage } from './classes';
+import { ChatMessage, ConnectionData, userAccepts } from './dataStructures/interfaces'
+import { generateRandomString, calculateTotalChunks, isJsonString, transferProgress, dealWithTransferProgressUpdates } from './utils';
+import { FileTransfer, senderCancelTransferMessage } from './dataStructures/classes';
 import { AppConfig } from './config';
 import { handleReceivedData } from './receiverFunctions';
 import { AppGlobals } from './globals/globals';
 import { removeConnectionByID } from "./globals/globalFunctions";
 
+import { Chat } from './components/chat';
+
 
 
 const App: React.FC = () => {
   const [peer, setPeer] = useState<Peer | null>(null);
-  const [messageInput, setMessageInput] = useState("");
   const [myPeerId, setMyPeerId] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
@@ -21,7 +22,7 @@ const App: React.FC = () => {
 
   const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 
-  const [chatLogs, setChatLogs] = useState<ChatMessage[]>([]);
+  
 
   useEffect(() => {
     const newPeer = new Peer();
@@ -61,7 +62,6 @@ const App: React.FC = () => {
     return () => {
       AppGlobals.connections.forEach((c) => c.connection.close());
       AppGlobals.connections.splice(0, AppGlobals.connections.length);
-      setChatLogs([]);
       newPeer.disconnect();
       newPeer.destroy();
       clearInterval(progressUpdatesInterval);
@@ -99,17 +99,7 @@ const App: React.FC = () => {
     }
   };
 
-  const sendMessage = () => {
-    if (messageInput) {
-      const chatMessage: ChatMessage = { peerId: myPeerId, message: messageInput };
-      const chatMessageTransfer = { text: messageInput, dataType: "CHAT_MESSAGE" }
-      setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
-      AppGlobals.connections
-        .filter((c) => c.peerId !== myPeerId)
-        .forEach((c) => c.connection.send(chatMessageTransfer));
-      setMessageInput("");
-    }
-  };
+
 
   const handleFileSubmit = () => {
     if (selectedFiles.length == 0){
@@ -161,14 +151,10 @@ const App: React.FC = () => {
   const resetConnection = () => {
     AppGlobals.connections.forEach((c) => c.connection.close());
     AppGlobals.connections.splice(0, AppGlobals.connections.length);
-    setChatLogs([]);
     forceUpdate();
   };
 
-  const addSystemMessage = (message: string) => {
-    const chatMessage: ChatMessage = { peerId: "SYSTEM", message: message };
-    setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
-  }
+
 
   const disconnectFromSelectedClient = (peerId: string) => {
     // closing connection with unwanted peer
@@ -267,14 +253,7 @@ const App: React.FC = () => {
           ))}
           <br/>
 
-          {ChatRenderer(chatLogs, myPeerId)}
-
-          <input
-            type="text"
-            value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
-          />
-          <button onClick={sendMessage}>Send</button>
+          <Chat myPeerId={myPeerId} />
 
           <br />
           <br />
