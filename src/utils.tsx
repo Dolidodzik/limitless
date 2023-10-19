@@ -5,7 +5,7 @@ import { ChatMessage, ConnectionData, progressUpdateMessage, chunkProgress } fro
 import { blobDict } from './types';
 import { FileTransfer } from './classes'; 
 import { AppConfig } from './config';
-import { AppGlobals } from './globals';
+import { AppGlobals } from './globals/globals';
 
 
 export function ChatRenderer(chatLogs: ChatMessage[], ownId: string) {

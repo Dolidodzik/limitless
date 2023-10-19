@@ -4,8 +4,9 @@ import { ChatMessage, ConnectionData, userAccepts } from './interfaces'
 import { ChatRenderer, generateRandomString, calculateTotalChunks, isJsonString, transferProgress, dealWithTransferProgressUpdates } from './utils';
 import { FileTransfer, senderCancelTransferMessage } from './classes';
 import { AppConfig } from './config';
-import { receiveFileChunk, receiveFileTransferFileAccept } from './receiverFunctions';
-import { AppGlobals } from './globals';
+import { handleReceivedData } from './receiverFunctions';
+import { AppGlobals } from './globals/globals';
+import { removeConnectionByID } from "./globals/globalFunctions";
 
 
 
@@ -27,7 +28,6 @@ const App: React.FC = () => {
     const progressUpdatesInterval = setInterval(() => 
     dealWithTransferProgressUpdates(), AppConfig.transferProgressUpdatesInterval);
 
-
     newPeer.on("open", (id) => {
       setMyPeerId(id);
       setPeer(newPeer);
@@ -44,14 +44,17 @@ const App: React.FC = () => {
       });
 
       conn.on("data", (data) => {
-        handleReceivedData(data, conn.peer);
+        handleReceivedData(
+          data, 
+          conn.peer, 
+          myPeerId,
+          forceUpdate  
+        );
       });
 
       conn.on("close", () => {
-        // removing connection
-        const indexToRemove = AppGlobals.connections.findIndex(c => c.peerId === conn.peer);
-        if (indexToRemove !== -1) { AppGlobals.connections.splice(indexToRemove, 1); }
-        addSystemMessage("Connection closed with: " + conn.peer)
+          removeConnectionByID(conn.peer);
+          addSystemMessage("Connection closed with: " + conn.peer)
       });
     });
 
@@ -64,60 +67,6 @@ const App: React.FC = () => {
       clearInterval(progressUpdatesInterval);
     };
   }, []);
-
-  const handleReceivedData = (data: any, senderPeerId: string) => {
-    
-    if(!data || !data.dataType){
-      console.warn("Received some data with nonexistent dataType property")
-      return;
-    }
-
-    if (data.dataType === "FILE_CHUNK") {
-      receiveFileChunk(
-        senderPeerId,
-        data,
-        forceUpdate
-      );
-    } else if (data.dataType == "TRANSFER_PROGRESS_UPDATE") {
-      // Received progress update from receiver
-      const fileInfo = AppGlobals.outgoingFileTransfers.find((file) => file.id === data.transferID);
-      if (fileInfo) {
-        fileInfo.setPeerProgress(senderPeerId, data.progress, data.last5updates);
-        forceUpdate();
-      }else{
-        console.warn("RECEIVED FAULTY FILE TRANSFER UPDATE")
-      }
-    } else if (data.dataType === "FILE_TRANSFER_ACCEPT" && data.id) {
-      receiveFileTransferFileAccept(
-        senderPeerId,
-        data,
-        forceUpdate
-      );
-    } else if (data.dataType == "FILE_TRANSFER_OFFER") { // sender chose files, and asks peer for permission to start sending them
-      if(data && data.totalChunks && data.size){ // checking if data is valid offer, or at least looks like it
-        console.log("file offer json string received ", data)
-        let incomingOffer = new FileTransfer(
-          data.name,
-          data.size,
-          data.totalChunks,
-          data.id,
-          data.type
-        );
-        incomingOffer.setPeerIDs(senderPeerId, [{id: myPeerId, isAccepted: false, progress: null, last5updates: null}])
-        AppGlobals.incomingFileTransfers.push(incomingOffer);
-        forceUpdate();
-      }
-    } else if (data.dataType == "CHAT_MESSAGE" && data.text){
-      // Handling usual text chat message
-      console.log("Received normal text message:", data);
-      const chatMessage: ChatMessage = { peerId: senderPeerId, message: data.text };
-      setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
-    } else if (data.dataType == "SENDER_CANCELLED_TRANSFER"){ // sender is letting know that he cancelled the transfer
-      // handle transfer being canclled somehow - transfer is effectively over, it can be deleted or kept alive just to let end user know what happened with it 
-    } else {
-      console.warn("received some data with unknown dataType")
-    }
-  };
 
   const connectToPeer = () => {
     const peerId = (document.getElementById("peerIdInput") as HTMLInputElement).value;
@@ -134,13 +83,17 @@ const App: React.FC = () => {
       });
 
       conn.on("data", (data) => {
-        handleReceivedData(data, conn.peer);
+        handleReceivedData(
+          data, 
+          conn.peer, 
+          myPeerId,
+          forceUpdate
+        );
       });
 
       conn.on("close", () => {
         // removing connection
-        const indexToRemove = AppGlobals.connections.findIndex(c => c.peerId === conn.peer);
-        if (indexToRemove !== -1) { AppGlobals.connections.splice(indexToRemove, 1); }
+        removeConnectionByID(conn.peer)
         addSystemMessage("Connection closed with: " + conn.peer)
       });
     }
@@ -225,8 +178,8 @@ const App: React.FC = () => {
     });
     
     // removing unwanted peer from connections 
-    const indexToRemove = AppGlobals.connections.findIndex(c => c.peerId === peerId);
-    if (indexToRemove !== -1) { AppGlobals.connections.splice(indexToRemove, 1); }
+    removeConnectionByID(peerId)
+    addSystemMessage("deleted peer connection: "+peerId)
     forceUpdate();
   }
 

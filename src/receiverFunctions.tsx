@@ -1,9 +1,7 @@
-import { blobDict } from './types';
-import { RefObject } from 'react';
 import { FileTransfer } from './classes'; 
 import { sendProgressUpdateMessage, sendChunksData } from './utils';
-import { ConnectionData } from './interfaces';
-import { AppGlobals } from './globals';
+import { ChatMessage } from './interfaces';
+import { AppGlobals } from './globals/globals';
 
 
 // FILE_TRANSFER_ACCEPT - receiver got the FILE_TRANSFER_OFFER, and now sends back message which is greenlighting sender to actually start sending chunks
@@ -79,7 +77,6 @@ export function receiveFileChunk(
 
         if (transferIndex !== -1) {
             AppGlobals.incomingFileTransfers[transferIndex].progress = progress;
-            //console.log(`receiver progress of transfer with ID ${transferID} has been set to ${transferID}.`);
             
             // letting know uploader how download progress is going
             sendProgressUpdateMessage(
@@ -137,3 +134,64 @@ export function receiveFileChunk(
         AppGlobals.receivedChunks[transferID].chunks = [];
     }    
 }
+
+// new data from other peer came
+
+export function handleReceivedData (
+    data: any, 
+    senderPeerId: string, 
+    myPeerId: string,
+    forceUpdate: () => void
+){
+    
+    if(!data || !data.dataType){
+      console.warn("Received some data with nonexistent dataType property")
+      return;
+    }
+
+    if (data.dataType === "FILE_CHUNK") {
+      receiveFileChunk(
+        senderPeerId,
+        data,
+        forceUpdate
+      );
+    } else if (data.dataType == "TRANSFER_PROGRESS_UPDATE") {
+      // Received progress update from receiver
+      const fileInfo = AppGlobals.outgoingFileTransfers.find((file) => file.id === data.transferID);
+      if (fileInfo) {
+        fileInfo.setPeerProgress(senderPeerId, data.progress, data.last5updates);
+        forceUpdate();
+      }else{
+        console.warn("RECEIVED FAULTY FILE TRANSFER UPDATE")
+      }
+    } else if (data.dataType === "FILE_TRANSFER_ACCEPT" && data.id) {
+      receiveFileTransferFileAccept(
+        senderPeerId,
+        data,
+        forceUpdate
+      );
+    } else if (data.dataType == "FILE_TRANSFER_OFFER") { // sender chose files, and asks peer for permission to start sending them
+      if(data && data.totalChunks && data.size){ // checking if data is valid offer, or at least looks like it
+        console.log("file offer json string received ", data)
+        let incomingOffer = new FileTransfer(
+          data.name,
+          data.size,
+          data.totalChunks,
+          data.id,
+          data.type
+        );
+        incomingOffer.setPeerIDs(senderPeerId, [{id: myPeerId, isAccepted: false, progress: null, last5updates: null}])
+        AppGlobals.incomingFileTransfers.push(incomingOffer);
+        forceUpdate();
+      }
+    } else if (data.dataType == "CHAT_MESSAGE" && data.text){
+      // Handling usual text chat message
+      console.log("Received normal text message:", data);
+      const chatMessage: ChatMessage = { peerId: senderPeerId, message: data.text };
+      // setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);  TODO LATER !!! THIS SHOULD BE MOVED TO SEPARATE CHAT COMPONENT AND THEN DEAL WITH IT
+    } else if (data.dataType == "SENDER_CANCELLED_TRANSFER"){ // sender is letting know that he cancelled the transfer
+      // handle transfer being canclled somehow - transfer is effectively over, it can be deleted or kept alive just to let end user know what happened with it 
+    } else {
+      console.warn("received some data with unknown dataType")
+    }
+  };
