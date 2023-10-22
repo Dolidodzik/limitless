@@ -7,6 +7,22 @@ dzielenie wszystkiego do osobnych funkcji jakis malych itd itd - usuwanie czegos
 
 potencjal na wyjebanie peer / my peer id etc i poleganie na zczytywaniu tego z obietku?
 
+// wymiana tego na
+
+    const sendChatMessage = () => {
+        if (messageInput) {
+            const chatMessage: ChatMessage = { peerId: myPeerId, message: messageInput };
+            const chatMessageTransfer = { text: messageInput, dataType: "CHAT_MESSAGE" }
+            setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
+            AppGlobals.connections
+            .filter((c) => c.peerId !== myPeerId)
+            .forEach((c) => c.connection.send(chatMessageTransfer));
+            setMessageInput("");
+        }
+    };
+taki tech zeby samo wysylanie wiadomosci bylo w osobnym pliku i tylko bylo to wolane odpowiednio
+
+
 // todo
 
 pausing given upload

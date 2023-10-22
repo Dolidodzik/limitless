@@ -1,5 +1,6 @@
 import React, { useEffect, useState, ChangeEvent, useRef } from "react";
 import Peer from "peerjs";
+
 import { ChatMessage, ConnectionData, userAccepts } from './dataStructures/interfaces'
 import { generateRandomString, calculateTotalChunks, isJsonString, transferProgress, dealWithTransferProgressUpdates } from './utils';
 import { FileTransfer, senderCancelTransferMessage } from './dataStructures/classes';
@@ -7,8 +8,7 @@ import { AppConfig } from './config';
 import { handleReceivedData } from './receiverFunctions';
 import { AppGlobals } from './globals/globals';
 import { removeConnectionByID } from "./globals/globalFunctions";
-
-import { Chat } from './components/chat';
+import { Chat, ChatRef } from "./components/chat";
 
 
 
@@ -22,7 +22,7 @@ const App: React.FC = () => {
 
   const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 
-  
+  const chatRef = useRef<ChatRef | null>(null);
 
   useEffect(() => {
     const newPeer = new Peer();
@@ -41,21 +41,28 @@ const App: React.FC = () => {
           peerId: conn.peer,
         };
         AppGlobals.connections.push(newConnectionData);
-        addSystemMessage("Connection established with: " + conn.peer)
+
+        if(chatRef.current)
+          chatRef.current.addMessageToChatLogs("Connection established with: " + conn.peer, "SYSTEM_MESSAGE") 
+        forceUpdate();
       });
 
       conn.on("data", (data) => {
+        if(!chatRef || !chatRef.current)
+          return
         handleReceivedData(
           data, 
           conn.peer, 
           myPeerId,
-          forceUpdate  
+          forceUpdate,
+          chatRef.current.addMessageToChatLogs
         );
       });
 
       conn.on("close", () => {
           removeConnectionByID(conn.peer);
-          addSystemMessage("Connection closed with: " + conn.peer)
+          if(chatRef && chatRef.current)
+            chatRef.current.addMessageToChatLogs("Connection closed with: " + conn.peer, "SYSTEM_MESSAGE")
       });
     });
 
@@ -69,32 +76,41 @@ const App: React.FC = () => {
   }, []);
 
   const connectToPeer = () => {
+    console.log('here')
     const peerId = (document.getElementById("peerIdInput") as HTMLInputElement).value;
     if (peer && peerId) {
       const conn = peer.connect(peerId);
-
+      console.log('here 2')
       conn.on("open", () => {
         const newConnectionData: ConnectionData = {
           connection: conn,
           peerId: conn.peer,
         };
         AppGlobals.connections.push(newConnectionData)
-        addSystemMessage("Connection established with: " + conn.peer)
+        if(chatRef && chatRef.current)
+            chatRef.current.addMessageToChatLogs("Connection established with: " + conn.peer, "SYSTEM_MESSAGE")
+        
+        console.log('here 3')
+        forceUpdate();
       });
 
       conn.on("data", (data) => {
+        if(!chatRef || !chatRef.current)
+          return
         handleReceivedData(
           data, 
           conn.peer, 
           myPeerId,
-          forceUpdate
+          forceUpdate,
+          chatRef.current.addMessageToChatLogs
         );
       });
 
       conn.on("close", () => {
         // removing connection
         removeConnectionByID(conn.peer)
-        addSystemMessage("Connection closed with: " + conn.peer)
+        if(chatRef && chatRef.current)
+          chatRef.current.addMessageToChatLogs("Connection closed with: " + conn.peer, "SYSTEM_MESSAGE")
       });
     }
   };
@@ -102,6 +118,7 @@ const App: React.FC = () => {
 
 
   const handleFileSubmit = () => {
+
     if (selectedFiles.length == 0){
       console.log("NO FILE SELECTED PLEASE SELECT FILE");
       return;
@@ -165,7 +182,8 @@ const App: React.FC = () => {
     
     // removing unwanted peer from connections 
     removeConnectionByID(peerId)
-    addSystemMessage("deleted peer connection: "+peerId)
+    if(chatRef && chatRef.current)
+      chatRef.current.addMessageToChatLogs("deleted peer connection: " + peerId, "SYSTEM_MESSAGE")
     forceUpdate();
   }
 
@@ -235,6 +253,8 @@ const App: React.FC = () => {
 
       {myPeerId && <h2>Your peer ID is: {myPeerId}</h2>}
 
+      <Chat myPeerId={myPeerId} ref={chatRef} />
+
       {AppGlobals.connections.length > 0 ? (
         <div>
           <h1>Connected to Peers:</h1>
@@ -252,8 +272,6 @@ const App: React.FC = () => {
             </div>
           ))}
           <br/>
-
-          <Chat myPeerId={myPeerId} />
 
           <br />
           <br />
@@ -296,9 +314,7 @@ const App: React.FC = () => {
               <br/>
             </div>
           ))}
-          
 
-          <br/>
           <br/>
 
           <input type="file" multiple onChange={handleFileUpload} />

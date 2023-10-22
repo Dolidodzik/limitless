@@ -141,10 +141,11 @@ export function handleReceivedData (
     data: any, 
     senderPeerId: string, 
     myPeerId: string,
-    forceUpdate: () => void
+    forceUpdate: () => void,
+    addMessageToChatLogs: (message: string, peerId: string) => void
 ){
     
-    if(!data || !data.dataType){
+    if(!data || !data.dataType || !addMessageToChatLogs){
       console.warn("Received some data with nonexistent dataType property")
       return;
     }
@@ -187,8 +188,7 @@ export function handleReceivedData (
     } else if (data.dataType == "CHAT_MESSAGE" && data.text){
       // Handling usual text chat message
       console.log("Received normal text message:", data);
-      const chatMessage: ChatMessage = { peerId: senderPeerId, message: data.text };
-      // setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);  TODO LATER !!! THIS SHOULD BE MOVED TO SEPARATE CHAT COMPONENT AND THEN DEAL WITH IT
+      addMessageToChatLogs(data.text, senderPeerId);
     } else if (data.dataType == "SENDER_CANCELLED_TRANSFER"){ // sender is letting know that he cancelled the transfer
       // handle transfer being canclled somehow - transfer is effectively over, it can be deleted or kept alive just to let end user know what happened with it 
     } else {
