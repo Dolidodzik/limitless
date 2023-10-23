@@ -1,7 +1,7 @@
-import { FileTransfer } from './dataStructures/classes'; 
+import { FileTransfer } from '../dataStructures/classes'; 
 import { sendProgressUpdateMessage, sendChunksData } from './utils';
-import { ChatMessage } from './dataStructures/interfaces';
-import { AppGlobals } from './globals/globals';
+import { ChatMessage } from '../dataStructures/interfaces';
+import { AppGlobals } from '../globals/globals';
 
 
 // FILE_TRANSFER_ACCEPT - receiver got the FILE_TRANSFER_OFFER, and now sends back message which is greenlighting sender to actually start sending chunks

@@ -18,3 +18,15 @@ body {
 .box{
   border: 3px solid black;
 }
+
+.chat {
+  background-color: #9b4175;
+}
+
+.connections {
+  background-color: #426644;
+}
+
+.fileTransfers {
+  background-color: #771d1d;
+}

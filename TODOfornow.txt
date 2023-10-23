@@ -27,7 +27,11 @@ taki tech zeby samo wysylanie wiadomosci bylo w osobnym pliku i tylko bylo to wo
 
 pausing given upload
 
+kasowanie wszystkiego po reset connection
+
 dissalow user from starting transfer when no receivers are chosen
+
+kolejnosc importow / importy tech
 
 time left/estimated etc
 
@@ -41,6 +45,8 @@ math progress validation to utils, generally move as much shit as possible to ut
 
 ACTUAL VALIDATION WHAT FILE WE ARE RECEIVING, IF FILE IS 10MB, WE SHOULDNT MORE CHUNKS THAN 10MB DOES IT MAKE SENSE. THINK ABOUT OTHER WAYS MALICIOUS ACTORS COULD TRY TO EXPLOIT PEER 2 PEER CONNECTION, THINK ABOUT USERS SAFETY
 
+testowanie file zgodnosci checksuma jeszcze - https://github.com/satazor/js-spark-md5
+importowanie / exportowanie defaulta a nie {} wszedzie
 cleanup console.logs and shit
 LINTING
 NICKNAMES ZAMIAST ZJEBANYCH ID

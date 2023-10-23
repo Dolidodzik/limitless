@@ -1,11 +1,11 @@
 // FOR NOW I WILL KEEP HERE ALL STUFF THAT IS EASILY SEPARATABLE FROM APP.TSX, LATER THERE WILL BE MORE SPLITING DONE
 
 import React, {RefObject} from 'react';
-import { ChatMessage, ConnectionData, progressUpdateMessage, chunkProgress } from './dataStructures/interfaces';
-import { blobDict } from './dataStructures/types';
-import { FileTransfer } from './dataStructures/classes'; 
-import { AppConfig } from './config';
-import { AppGlobals } from './globals/globals';
+import { ChatMessage, ConnectionData, progressUpdateMessage, chunkProgress } from '../dataStructures/interfaces';
+import { blobDict } from '../dataStructures/types';
+import { FileTransfer } from '../dataStructures/classes'; 
+import { AppConfig } from '../config';
+import { AppGlobals } from '../globals/globals';
 
 
 export function generateRandomString(length: number): string {
