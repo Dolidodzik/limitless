@@ -1,56 +1,27 @@
-
 // in progress
 
-
+taki tech zeby samo wysylanie wiadomosci bylo w osobnym pliku i tylko bylo to wolane odpowiednio
 ABSTRACT MORE FUNCTIONS / STUFF INTO SEPARATE COMPONENTS
 dzielenie wszystkiego do osobnych funkcji jakis malych itd itd - usuwanie czegos po indexie, wysylwanie X do wszystkich peerow, wysylwanie Y po indexie itd itd
 
-potencjal na wyjebanie peer / my peer id etc i poleganie na zczytywaniu tego z obietku?
-
-// wymiana tego na
-
-    const sendChatMessage = () => {
-        if (messageInput) {
-            const chatMessage: ChatMessage = { peerId: myPeerId, message: messageInput };
-            const chatMessageTransfer = { text: messageInput, dataType: "CHAT_MESSAGE" }
-            setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
-            AppGlobals.connections
-            .filter((c) => c.peerId !== myPeerId)
-            .forEach((c) => c.connection.send(chatMessageTransfer));
-            setMessageInput("");
-        }
-    };
-taki tech zeby samo wysylanie wiadomosci bylo w osobnym pliku i tylko bylo to wolane odpowiednio
-
-
 // todo
-
 pausing given upload
-
 kasowanie wszystkiego po reset connection
-
-dissalow user from starting transfer when no receivers are chosen
-
+dissalow user from starting transfer when no receivers are chosen, notyfing user properly
 kolejnosc importow / importy tech
-
 time left/estimated etc
-
-CLEANUP OVERALL
-
 handling resets (clearing transfers history etc, dealing with stuff like one peer being left alone in the room - what do we do with previous messages? do we reset room by default? etc)
-
 checking if transferID matches PeerID when receiving each chunk
-Id vs id vs ID
 math progress validation to utils, generally move as much shit as possible to utils.js
-
 ACTUAL VALIDATION WHAT FILE WE ARE RECEIVING, IF FILE IS 10MB, WE SHOULDNT MORE CHUNKS THAN 10MB DOES IT MAKE SENSE. THINK ABOUT OTHER WAYS MALICIOUS ACTORS COULD TRY TO EXPLOIT PEER 2 PEER CONNECTION, THINK ABOUT USERS SAFETY
-
 testowanie file zgodnosci checksuma jeszcze - https://github.com/satazor/js-spark-md5
-importowanie / exportowanie defaulta a nie {} wszedzie
-cleanup console.logs and shit
-LINTING
 NICKNAMES ZAMIAST ZJEBANYCH ID
-Id vs id vs ID
 zwracanie jakis bledow jak plik jest pusty itd
 adding more functions to FileInfo can make things easier
-czyszczenie komentarzy
+
+// na sam koniec
+importowanie / exportowanie defaulta a nie {} wszedzie
+Id vs id vs ID
+LINTING
+czyszczenie komentarzy / console logow
+CLEANUP OVERALL WSZYSTKO

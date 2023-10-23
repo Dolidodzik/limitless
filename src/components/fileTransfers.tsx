@@ -91,10 +91,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           dataType: "FILE_TRANSFER_ACCEPT",
           id: updatedFile.id 
         }
-    
-        AppGlobals.connections
-        .filter((c) => c.peerId === updatedFile.senderPeerID)
-        .forEach((c) => c.connection.send(info));
+        sendSomeData(updatedFile.senderPeerID, info)
     
         AppGlobals.incomingFileTransfers[fileIndex] = updatedFile;
         forceUpdate();
@@ -108,12 +105,8 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
         const transferPeers = AppGlobals.outgoingFileTransfers[transferIndex].receiverPeers.map(peer => peer.id)
     
         // sending data only to peers that are receiving this file transfer
-        AppGlobals.connections.forEach((c) => {
-          if(transferPeers.includes(c.peerId)){
-            let cancelMessage = JSON.parse(JSON.stringify(new senderCancelTransferMessage(transferID)))
-            c.connection.send(cancelMessage)
-          }
-        });
+        let cancelMessage = new senderCancelTransferMessage(transferID)
+        sendSomeData(transferPeers, cancelMessage)
     
         const indexToDelete = AppGlobals.outgoingFileTransfers.findIndex(fileInfo => fileInfo.id === transferID);
         if (indexToDelete !== -1) {
