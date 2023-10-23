@@ -27,7 +27,6 @@ export const Chat = forwardRef(({
             const chatMessageTransfer = { text: messageInput, dataType: "CHAT_MESSAGE" }
             setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
             AppGlobals.connections
-            .filter((c) => c.peerId !== myPeerId)
             .forEach((c) => c.connection.send(chatMessageTransfer));
             setMessageInput("");
         }

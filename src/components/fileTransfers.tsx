@@ -8,6 +8,8 @@ import { FileTransfer, senderCancelTransferMessage } from "../dataStructures/cla
 import { calculateTotalChunks, generateRandomString } from "../utils/utils";
 import { userAccepts } from "../dataStructures/interfaces";
 import { ChatRef } from "./chat";
+import { sendSomeData } from "../utils/senderFunctions";
+import { off } from "process";
 
 
 
@@ -19,7 +21,6 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 
     const handleFileSubmit = () => {
-
         if (selectedFiles.length == 0){
           console.log("NO FILE SELECTED PLEASE SELECT FILE");
           return;
@@ -36,13 +37,9 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           )
           
           // sending data only to selected peers
-          AppGlobals.connections.forEach((c) => {
-            if(targetPeers.includes(c.peerId)){
-              let offer: any = JSON.parse(JSON.stringify(outgoingTransferOffer));
-              offer.dataType = "FILE_TRANSFER_OFFER";
-              c.connection.send(offer)
-            }
-          });
+          let offer: any = JSON.parse(JSON.stringify(outgoingTransferOffer));
+          offer.dataType = "FILE_TRANSFER_OFFER";
+          sendSomeData(targetPeers, offer);
       
           // when connection is already sent, we edit it for this client only and assign correct peer ids
           const connectedPeerIDs: userAccepts[] = targetPeers.map(targetPeerID => ({ id: targetPeerID, isAccepted: false, progress: null, last5updates: null }));
