@@ -32,14 +32,15 @@ export function isJsonString(str: string): boolean {
   return true;
 }
 
-export function sendProgressUpdateMessage(progress: number, senderPeerId: string, transferID: string, last5updates: chunkProgress[] | null){ // chunk progress can be null, because if it's just null then it means that we want to set speed to 0 and that's it
-    // sending progress update to the sender
+export function sendProgressUpdateMessage(progress: number, senderPeerId: string, transferID: string, last5updates: chunkProgress[]){ // chunk progress can be null, because if it's just null then it means that we want to set speed to 0 and that's it
+  // sending progress update to the sender
   const progressUpdate: progressUpdateMessage = {
     progress: progress,
     transferID: transferID,
     dataType: "TRANSFER_PROGRESS_UPDATE",
     last5updates: last5updates
   }
+  console.log("SENDING PROGRESS UPDATE FROM SENDER", progressUpdate)
   sendSomeData(progressUpdate, senderPeerId);
 }
 
@@ -67,13 +68,25 @@ export function transferProgress(last5chunks: chunkProgress[] | null, progress: 
 }
 
 // should be called every 500ms. This function loops over every transfer, and checks how progress is going
-export function dealWithTransferProgressUpdates(){
+export function dealWithTransferProgressUpdates(forceUpdate: () => void){
   AppGlobals.incomingFileTransfers.forEach((fileTransfer) => {
     let chunks = 0;
     if(AppGlobals.receivedChunks[fileTransfer.id] && AppGlobals.receivedChunks[fileTransfer.id].chunks){
       chunks = AppGlobals.receivedChunks[fileTransfer.id].chunks.length
     }
     fileTransfer.appendLast5Chunks(chunks)
+    
+    // sending update to sender of the file about progress
+    if(fileTransfer.senderPeerID && fileTransfer.progress){
+      sendProgressUpdateMessage(
+        fileTransfer.progress,
+        fileTransfer.senderPeerID,
+        fileTransfer.id,
+        fileTransfer.last5updates
+      );
+    }
+
     console.log(fileTransfer.last5updates)
+    forceUpdate();
   });
 }

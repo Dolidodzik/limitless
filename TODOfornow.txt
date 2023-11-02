@@ -12,6 +12,7 @@ testowanie file zgodnosci checksuma jeszcze - https://github.com/satazor/js-spar
 NICKNAMES ZAMIAST ZJEBANYCH ID
 zwracanie jakis bledow jak plik jest pusty itd
 adding more functions to FileInfo can make things easier
+deleting transfer notification for other peer etc
 
 // na sam koniec zeby poprzegladac wszystko raz jeszcze
 importowanie / exportowanie defaulta a nie {} wszedzie

@@ -78,15 +78,6 @@ export function receiveFileChunk(
 
         if (transferIndex !== -1) {
             AppGlobals.incomingFileTransfers[transferIndex].progress = progress;
-            
-            // letting know uploader how download progress is going
-            sendProgressUpdateMessage(
-                progress,
-                senderPeerId,
-                transferID,
-                AppGlobals.incomingFileTransfers[transferIndex].last5updates
-            );
-
             forceUpdate()
         } else {
             console.log(`No reciver transfer found with ID ${transferID}.`);
@@ -115,14 +106,6 @@ export function receiveFileChunk(
         anchorElement.click();
 
         URL.revokeObjectURL(downloadLink);
-
-        // letting the uploader know how download progress is going
-        sendProgressUpdateMessage(
-            100,
-            senderPeerId,
-            transferID,
-            null
-        );
 
         // set progress to 100
         const transferIndex = AppGlobals.incomingFileTransfers.findIndex(
@@ -160,6 +143,7 @@ export function handleReceivedData (
     } else if (data.dataType == "TRANSFER_PROGRESS_UPDATE") {
       // Received progress update from receiver
       const fileInfo = AppGlobals.outgoingFileTransfers.find((file) => file.id === data.transferID);
+      console.log("received progress update from receiver: ", fileInfo)
       if (fileInfo) {
         fileInfo.setPeerProgress(senderPeerId, data.progress, data.last5updates);
         forceUpdate();

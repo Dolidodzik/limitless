@@ -4,13 +4,12 @@ import { AppGlobals } from "../globals/globals";
 import { AppConfig } from "../config";
 import { removeConnectionByID } from "../globals/globalFunctions";
 import Peer from "peerjs";
-import { dealWithTransferProgressUpdates } from '../utils/utils';
 import { ConnectionData } from "../dataStructures/interfaces";
 import { handleReceivedData } from "../utils/receiverFunctions";
 import { ChatRef } from "./chat";
 
 // dirty workaround
-let progressUpdateHandle: any;
+
 
 export const LoadingPeerJS = (props: {
     chatRef: React.RefObject<ChatRef | null>, 
@@ -21,11 +20,7 @@ export const LoadingPeerJS = (props: {
     const [peer, setPeer] = useState<Peer | null>(null);
 
     useEffect(() => {
-        const newPeer = new Peer();
-        progressUpdateHandle = setInterval(() => {
-          dealWithTransferProgressUpdates()
-        }
-        , AppConfig.transferProgressUpdatesInterval);
+      const newPeer = new Peer();
     
         newPeer.on("open", (id) => {
             props.setMyPeerId(id);
@@ -77,7 +72,6 @@ export const LoadingPeerJS = (props: {
           peer.disconnect();
           peer.destroy();
         }
-        clearInterval(progressUpdateHandle);
       }
     
       const connectToPeer = () => {

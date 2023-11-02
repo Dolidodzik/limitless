@@ -1,5 +1,5 @@
 
-import React, { useState, ChangeEvent, MutableRefObject } from "react";
+import React, { useState, ChangeEvent, MutableRefObject, useEffect } from "react";
 
 import { AppConfig } from "../config";
 import { AppGlobals } from "../globals/globals";
@@ -9,8 +9,11 @@ import { calculateTotalChunks, generateRandomString } from "../utils/utils";
 import { userAccepts } from "../dataStructures/interfaces";
 import { ChatRef } from "./chat";
 import { sendSomeData } from "../utils/senderFunctions";
-import { off } from "process";
+import { dealWithTransferProgressUpdates } from '../utils/utils';
 
+
+
+let progressUpdateHandle: any;
 
 
 export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject<ChatRef | null>, disconnectFromSelectedClient: (peerId: string) => void}) => {
@@ -19,6 +22,19 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     const [targetPeers, setTargetPeers] = useState<string[]>([]);
 
     const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
+
+    useEffect(() => {
+      progressUpdateHandle = setInterval(() => {
+        dealWithTransferProgressUpdates(forceUpdate)
+      }
+      , AppConfig.transferProgressUpdatesInterval);
+  
+      // A cleanup function can be returned from the effect.
+      return () => {
+        console.log('Cleanup performed');
+        clearInterval(progressUpdateHandle);
+      };
+    }, []);
 
     const handleFileSubmit = () => {
         if (selectedFiles.length == 0){
