@@ -8,7 +8,7 @@ import { FileTransfer, senderCancelTransferMessage } from "../dataStructures/cla
 import { calculateTotalChunks, generateRandomString } from "../utils/utils";
 import { userAccepts } from "../dataStructures/interfaces";
 import { ChatRef } from "./chat";
-import { sendSomeData } from "../utils/senderFunctions";
+import { sendSomeData, sendTransferPauseNotification } from "../utils/senderFunctions";
 import { dealWithTransferProgressUpdates } from '../utils/utils';
 
 
@@ -136,6 +136,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
       console.log("PAUSING TRANSFER: ", transferID)
       const index = AppGlobals.outgoingFileTransfers.findIndex(fileInfo => fileInfo.id === transferID);
       AppGlobals.outgoingFileTransfers[index].isPaused = true;
+      sendTransferPauseNotification(true, transferID)
       forceUpdate();
     }
 
@@ -143,6 +144,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
       console.log("resuming TRANSFER: ", transferID)
       const index = AppGlobals.outgoingFileTransfers.findIndex(fileInfo => fileInfo.id === transferID);
       AppGlobals.outgoingFileTransfers[index].isPaused = false;
+      sendTransferPauseNotification(false, transferID)
       forceUpdate();
     }
 
@@ -186,6 +188,11 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
               ) : (
                 <span> You didn't accept this transfer. <button onClick={() => acceptTransfer(transfer.id)}> accept </button> </span>
               )}
+              <br/>
+              {transfer.isPaused       
+                ? <div> This transfer is paused </div>
+                : <div> This transfer is going now </div>
+              }
             </div>
           ))}
 

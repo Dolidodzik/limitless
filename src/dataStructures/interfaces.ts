@@ -31,6 +31,12 @@ export interface userAccepts {
   last5updates: chunkProgress[] | null // last5updates can be always null, if there's not progress yet, or when progress is over, we want to set speed to 0 and that's just it
 }
 
+export interface transferPauseNotification {
+  dataType: string,
+  isPaused: boolean, // tells to what value isPaused to be set 
+  transferID: string
+}
+
 export interface progressUpdateMessage {
   dataType: string,
   transferID: string,

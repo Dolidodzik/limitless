@@ -176,6 +176,9 @@ export function handleReceivedData (
       addMessageToChatLogs(data.text, senderPeerId);
     } else if (data.dataType == "SENDER_CANCELLED_TRANSFER"){ // sender is letting know that he cancelled the transfer
       // handle transfer being canclled somehow - transfer is effectively over, it can be deleted or kept alive just to let end user know what happened with it 
+    } else if(data.dataType == "TRANSFER_PAUSE_NOTIFICATION"){
+      const index = AppGlobals.incomingFileTransfers.findIndex(fileInfo => fileInfo.id === data.transferID);
+      AppGlobals.incomingFileTransfers[index].isPaused = data.isPaused;
     } else {
       console.warn("received some data with unknown dataType")
     }

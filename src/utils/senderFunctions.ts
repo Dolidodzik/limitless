@@ -1,7 +1,7 @@
 import { AppGlobals } from "../globals/globals";
 import { AppConfig } from "../config";
 import { calculateTotalChunks } from "./utils";
-import { ConnectionData } from "../dataStructures/interfaces";
+import { ConnectionData, transferPauseNotification } from "../dataStructures/interfaces";
 
 
 export function sendSomeData(
@@ -28,6 +28,22 @@ export function sendSomeData(
         AppGlobals.connections
         .forEach((c) => c.connection.send(data));
     }
+}
+
+export function sendTransferPauseNotification(isPaused: boolean, transferID: string){
+  const notification: transferPauseNotification = {
+    dataType: "TRANSFER_PAUSE_NOTIFICATION",
+    isPaused: isPaused,
+    transferID: transferID
+  }
+
+  const index = AppGlobals.outgoingFileTransfers.findIndex(fileInfo => fileInfo.id === transferID);
+  let targetPeers: string[] = [];
+  AppGlobals.outgoingFileTransfers[index].receiverPeers.forEach(userAccepts => {
+    targetPeers.push(userAccepts.id)
+  });
+
+  sendSomeData(notification, targetPeers);
 }
 
 export const sendChunksData = async (file: File, connectionData: ConnectionData, transferID: string) => {
