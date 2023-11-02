@@ -37,7 +37,6 @@ export class FileTransfer implements FileInfoInterface {
 
     // for sender
     public setPeerProgress = (peerId: string, progress: number, last5updates: chunkProgress[] | null) => {
-      console.log("SET PEER PROGRESS CALLED")
       const peerIndex = this.receiverPeers.findIndex((peer) => peer.id === peerId);
       if (peerIndex !== -1) {
         this.receiverPeers[peerIndex].progress = progress;

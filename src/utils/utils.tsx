@@ -40,18 +40,17 @@ export function sendProgressUpdateMessage(progress: number, senderPeerId: string
     dataType: "TRANSFER_PROGRESS_UPDATE",
     last5updates: last5updates
   }
-  console.log("SENDING PROGRESS UPDATE FROM SENDER", progressUpdate)
   sendSomeData(progressUpdate, senderPeerId);
 }
 
-export function transferProgress(last5chunks: chunkProgress[] | null, progress: number | null) {
+export function transferProgressSpeed(last5chunks: chunkProgress[] | null, progress: number | null) {
 
   // if there's no enough data to approximate speed, or progress is already 100, then just return speed as 0
   if (!last5chunks || last5chunks.length < 2 || progress == 100) {
     return 0;
   }
 
-  const chunkSizeKB = AppConfig.chunkSize / 1024;
+  const chunkSizeKB = AppConfig.chunkSize / 1000;
   const numberOfChunks = last5chunks.length;
   
   // Calculate the total time taken to upload the chunks (in milliseconds).
@@ -64,8 +63,46 @@ export function transferProgress(last5chunks: chunkProgress[] | null, progress: 
   const uploadSpeedKBps = totalSizeKB / (totalTime / 1000);
 
   // output is in MB/s rounded to 2 decimal places
-  return (uploadSpeedKBps/1024).toFixed(2);
+  return (uploadSpeedKBps/1000)
 }
+
+export function transferProgressSize(last5chunks: chunkProgress[] | null, totalChunks: number){
+
+  if(!last5chunks || !last5chunks[0])
+    return;
+
+  const chunkSizeKB = AppConfig.chunkSize / 1000;
+  const fullSize = (totalChunks * chunkSizeKB / 1000).toFixed(2)
+  const alreadyTransferredSize = (last5chunks[0].chunkNumber * chunkSizeKB / 1000).toFixed(2)
+
+  return alreadyTransferredSize+ "MB / "+ fullSize +"MB "
+}
+
+export function transferProgressEstimatedTime(last5chunks: chunkProgress[] | null, totalChunks: number, progress: number | null){
+
+  console.log("SIMA: ", last5chunks, " : ", totalChunks, " : ", progress)
+
+  if(progress == 100)
+    return 0
+
+  if(!last5chunks || last5chunks.length < 2)
+    return;
+
+  const chunkSizeKB = AppConfig.chunkSize / 1000;
+
+  const fullSize = (totalChunks * chunkSizeKB / 1000)
+  const alreadyTransferredSize = (last5chunks[0].chunkNumber * chunkSizeKB / 1000)
+
+  const MBsLeftToTransfer = fullSize - alreadyTransferredSize;
+  const uploadSpeedMBps = transferProgressSpeed(last5chunks, progress);
+
+  const timeLeft = MBsLeftToTransfer / uploadSpeedMBps; // in seconds
+
+  console.log(timeLeft)
+
+  return timeLeft;
+}
+
 
 // should be called every 500ms. This function loops over every transfer, and checks how progress is going
 export function dealWithTransferProgressUpdates(forceUpdate: () => void){
@@ -86,7 +123,6 @@ export function dealWithTransferProgressUpdates(forceUpdate: () => void){
       );
     }
 
-    console.log(fileTransfer.last5updates)
     forceUpdate();
   });
 }

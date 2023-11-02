@@ -143,7 +143,6 @@ export function handleReceivedData (
     } else if (data.dataType == "TRANSFER_PROGRESS_UPDATE") {
       // Received progress update from receiver
       const fileInfo = AppGlobals.outgoingFileTransfers.find((file) => file.id === data.transferID);
-      console.log("received progress update from receiver: ", fileInfo)
       if (fileInfo) {
         fileInfo.setPeerProgress(senderPeerId, data.progress, data.last5updates);
         forceUpdate();

@@ -1,15 +1,14 @@
 // in progress
-powiadomienie o pauzie
+time left/estimated etc
+NICKNAMES ZAMIAST ZJEBANYCH ID
 
 // todo
 dissalow user from starting transfer when no receivers are chosen, notyfing user properly
-time left/estimated etc
 handling resets (clearing transfers history etc, dealing with stuff like one peer being left alone in the room - what do we do with previous messages? do we reset room by default? etc)
 checking if transferID matches PeerID when receiving each chunk
 math progress validation to utils, generally move as much shit as possible to utils.js
 ACTUAL VALIDATION WHAT FILE WE ARE RECEIVING, IF FILE IS 10MB, WE SHOULDNT MORE CHUNKS THAN 10MB DOES IT MAKE SENSE. THINK ABOUT OTHER WAYS MALICIOUS ACTORS COULD TRY TO EXPLOIT PEER 2 PEER CONNECTION, THINK ABOUT USERS SAFETY
 testowanie file zgodnosci checksuma jeszcze - https://github.com/satazor/js-spark-md5
-NICKNAMES ZAMIAST ZJEBANYCH ID
 zwracanie jakis bledow jak plik jest pusty itd
 adding more functions to FileInfo can make things easier
 deleting transfer notification for other peer etc
