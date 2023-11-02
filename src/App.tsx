@@ -22,7 +22,7 @@ const App: React.FC = () => {
     });
     
     // removing unwanted peer from connections 
-    removeConnectionByID(peerId)
+    removeConnectionByID(peerId, forceUpdate)
     if(chatRef && chatRef.current)
       chatRef.current.addMessageToChatLogs("deleted peer connection: " + peerId, "SYSTEM_MESSAGE")
     forceUpdate();

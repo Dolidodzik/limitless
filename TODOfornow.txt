@@ -1,14 +1,8 @@
 // in progress
-
-taki tech zeby samo wysylanie wiadomosci bylo w osobnym pliku i tylko bylo to wolane odpowiednio
-ABSTRACT MORE FUNCTIONS / STUFF INTO SEPARATE COMPONENTS
-dzielenie wszystkiego do osobnych funkcji jakis malych itd itd - usuwanie czegos po indexie, wysylwanie X do wszystkich peerow, wysylwanie Y po indexie itd itd
+pausing given upload
 
 // todo
-pausing given upload
-kasowanie wszystkiego po reset connection
 dissalow user from starting transfer when no receivers are chosen, notyfing user properly
-kolejnosc importow / importy tech
 time left/estimated etc
 handling resets (clearing transfers history etc, dealing with stuff like one peer being left alone in the room - what do we do with previous messages? do we reset room by default? etc)
 checking if transferID matches PeerID when receiving each chunk
@@ -19,9 +13,11 @@ NICKNAMES ZAMIAST ZJEBANYCH ID
 zwracanie jakis bledow jak plik jest pusty itd
 adding more functions to FileInfo can make things easier
 
-// na sam koniec
+// na sam koniec zeby poprzegladac wszystko raz jeszcze
 importowanie / exportowanie defaulta a nie {} wszedzie
+kolejnosc importow / importy tech
 Id vs id vs ID
 LINTING
 czyszczenie komentarzy / console logow
-CLEANUP OVERALL WSZYSTKO
+ABSTRACT MORE FUNCTIONS / STUFF INTO SEPARATE COMPONENTS once more
+CLEANUP OVERALL WSZYSTKO once more

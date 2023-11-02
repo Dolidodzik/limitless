@@ -9,6 +9,8 @@ import { ConnectionData } from "../dataStructures/interfaces";
 import { handleReceivedData } from "../utils/receiverFunctions";
 import { ChatRef } from "./chat";
 
+// dirty workaround
+let progressUpdateHandle: any;
 
 export const LoadingPeerJS = (props: {
     chatRef: React.RefObject<ChatRef | null>, 
@@ -20,7 +22,7 @@ export const LoadingPeerJS = (props: {
 
     useEffect(() => {
         const newPeer = new Peer();
-        const progressUpdatesInterval = setInterval(() => {
+        progressUpdateHandle = setInterval(() => {
           dealWithTransferProgressUpdates()
         }
         , AppConfig.transferProgressUpdatesInterval);
@@ -57,20 +59,26 @@ export const LoadingPeerJS = (props: {
           });
     
           conn.on("close", () => {
-              removeConnectionByID(conn.peer);
+              removeConnectionByID(conn.peer, props.forceUpdate);
               if(props.chatRef && props.chatRef.current)
                 props.chatRef.current.addMessageToChatLogs("Connection closed with: " + conn.peer, "SYSTEM_MESSAGE")
           });
         });
     
         return () => {
-          AppGlobals.connections.forEach((c) => c.connection.close());
-          AppGlobals.connections.splice(0, AppGlobals.connections.length);
-          newPeer.disconnect();
-          newPeer.destroy();
-          clearInterval(progressUpdatesInterval);
+          resetApp();
         };
       }, []);
+
+      const resetApp = () => {
+        AppGlobals.connections.forEach((c) => c.connection.close());
+        AppGlobals.connections.splice(0, AppGlobals.connections.length);
+        if(peer){
+          peer.disconnect();
+          peer.destroy();
+        }
+        clearInterval(progressUpdateHandle);
+      }
     
       const connectToPeer = () => {
         const peerId = (document.getElementById("peerIdInput") as HTMLInputElement).value;
@@ -102,7 +110,7 @@ export const LoadingPeerJS = (props: {
     
           conn.on("close", () => {
             // removing connection
-            removeConnectionByID(conn.peer)
+            removeConnectionByID(conn.peer, props.forceUpdate)
             if(props.chatRef && props.chatRef.current)
                 props.chatRef.current.addMessageToChatLogs("Connection closed with: " + conn.peer, "SYSTEM_MESSAGE")
           });

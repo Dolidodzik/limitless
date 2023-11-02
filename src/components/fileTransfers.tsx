@@ -39,7 +39,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           // sending data only to selected peers
           let offer: any = JSON.parse(JSON.stringify(outgoingTransferOffer));
           offer.dataType = "FILE_TRANSFER_OFFER";
-          sendSomeData(targetPeers, offer);
+          sendSomeData(offer, targetPeers);
       
           // when connection is already sent, we edit it for this client only and assign correct peer ids
           const connectedPeerIDs: userAccepts[] = targetPeers.map(targetPeerID => ({ id: targetPeerID, isAccepted: false, progress: null, last5updates: null }));
@@ -91,7 +91,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           dataType: "FILE_TRANSFER_ACCEPT",
           id: updatedFile.id 
         }
-        sendSomeData(updatedFile.senderPeerID, info)
+        sendSomeData(info, updatedFile.senderPeerID)
     
         AppGlobals.incomingFileTransfers[fileIndex] = updatedFile;
         forceUpdate();
@@ -106,7 +106,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     
         // sending data only to peers that are receiving this file transfer
         let cancelMessage = new senderCancelTransferMessage(transferID)
-        sendSomeData(transferPeers, cancelMessage)
+        sendSomeData(cancelMessage, transferPeers)
     
         const indexToDelete = AppGlobals.outgoingFileTransfers.findIndex(fileInfo => fileInfo.id === transferID);
         if (indexToDelete !== -1) {
@@ -114,6 +114,20 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
         }
         
         forceUpdate();
+    }
+
+    const pauseOutgoingTransfer = (transferID: string) => {
+      console.log("PAUSING TRANSFER: ", transferID)
+      const index = AppGlobals.outgoingFileTransfers.findIndex(fileInfo => fileInfo.id === transferID);
+      AppGlobals.outgoingFileTransfers[index].isPaused = true;
+      forceUpdate();
+    }
+
+    const resumeOutgoingTransfer = (transferID: string) => {
+      console.log("resuming TRANSFER: ", transferID)
+      const index = AppGlobals.outgoingFileTransfers.findIndex(fileInfo => fileInfo.id === transferID);
+      AppGlobals.outgoingFileTransfers[index].isPaused = false;
+      forceUpdate();
     }
 
     return (
@@ -171,6 +185,11 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                 <div key={receiver.id}> 
                   * {receiver.id}, accepted: {receiver.isAccepted.toString()}, with progress {receiver.progress}%
                   <br/> speed: {transferProgress(receiver.last5updates, transfer.progress)}
+                  <br/> 
+                  {transfer.isPaused       
+                    ? <div> This transfer is paused <button onClick={() => {resumeOutgoingTransfer(transfer.id)}}> RESUME UPLOAD </button> </div>
+                    : <div> This transfer is going now <button onClick={() => {pauseOutgoingTransfer(transfer.id)}}> PAUSE UPLOAD </button> </div>
+                  }
                 </div>
               ))}
               <br/>

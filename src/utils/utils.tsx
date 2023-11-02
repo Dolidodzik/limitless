@@ -6,6 +6,7 @@ import { blobDict } from '../dataStructures/types';
 import { FileTransfer } from '../dataStructures/classes'; 
 import { AppConfig } from '../config';
 import { AppGlobals } from '../globals/globals';
+import { sendSomeData } from './senderFunctions';
 
 
 export function generateRandomString(length: number): string {
@@ -31,94 +32,15 @@ export function isJsonString(str: string): boolean {
   return true;
 }
 
-export const sendChunksData = async (file: File, connectionData: ConnectionData, transferID: string) => {
-
-  const chunkSize: number = AppConfig.chunkSize;
-
-  if (!file){
-    console.log("NO FILE SELECTED??? BIG ERROR SOMETHING WENT WRONG.");
-    return;
-  } 
-
-  const totalChunks = calculateTotalChunks(file.size, chunkSize)
-  const reader = new FileReader();
-  let currentChunk = 0;
-
-  reader.onload = () => {
-    const arrayBuffer = reader.result as ArrayBuffer;
-    const chunkData = new Uint8Array(arrayBuffer);
-
-    const chunk = {
-      dataType: "FILE_CHUNK",
-      chunk: chunkData,
-      currentChunk,
-      totalChunks,
-      name: file.name,
-      type: file.type,
-      transferID: transferID,
-      chunkOrder: currentChunk
-    };
-    
-    const doTheSending = async () => {
-      connectionData.connection.send(chunk);
-  
-      if (currentChunk < totalChunks - 1) {
-        currentChunk++;
-        loadNextChunk();
-      }
-    }
-
-    const waiter = async() => {
-
-      const fileInfo = AppGlobals.outgoingFileTransfers.find(
-        (fileInfo) => fileInfo.id === transferID
-      );
-
-      const userAccepts = fileInfo?.receiverPeers.find(
-        (peer) => peer.id === connectionData.peerId
-      );
-      let clientProgress: number = 0;
-      if(userAccepts?.progress){
-        clientProgress = userAccepts.progress
-      }
-
-      // this check makes sure we don't chunk too much of data in advance. It matters only for bigger files tho
-      if((totalChunks<100) || (clientProgress+2 >= (currentChunk / totalChunks) * 100)){
-        doTheSending();
-      } else {
-        setTimeout(function () {
-          waiter();
-        }, 100)
-      }
-    }
-    waiter();
-  };
-
-  const loadNextChunk = () => {
-    const start = currentChunk * chunkSize;
-    const end = Math.min(start + chunkSize, file.size);
-    const chunk = file.slice(start, end);
-    reader.readAsArrayBuffer(chunk);
-  };
-
-  if(currentChunk <= 0){
-    loadNextChunk();
-  }
-};
-
 export function sendProgressUpdateMessage(progress: number, senderPeerId: string, transferID: string, last5updates: chunkProgress[] | null){ // chunk progress can be null, because if it's just null then it means that we want to set speed to 0 and that's it
-
+    // sending progress update to the sender
   const progressUpdate: progressUpdateMessage = {
     progress: progress,
     transferID: transferID,
     dataType: "TRANSFER_PROGRESS_UPDATE",
     last5updates: last5updates
   }
-
-  // sending progress update to the sender
-  AppGlobals.connections
-  .filter((c) => c.peerId === senderPeerId)
-  .forEach((c) => c.connection.send(progressUpdate));
+  sendSomeData(progressUpdate, senderPeerId);
 }
 
 export function transferProgress(last5chunks: chunkProgress[] | null, progress: number | null) {

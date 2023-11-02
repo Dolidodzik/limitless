@@ -1,6 +1,7 @@
 import React, { useState, forwardRef, useImperativeHandle, ForwardedRef } from "react";
 import { ChatMessage } from "../dataStructures/interfaces";
 import { AppGlobals } from "../globals/globals";
+import { sendSomeData } from "../utils/senderFunctions";
 
 interface ChatProps {
     myPeerId: string;
@@ -26,8 +27,7 @@ export const Chat = forwardRef(({
             const chatMessage: ChatMessage = { peerId: myPeerId, message: messageInput };
             const chatMessageTransfer = { text: messageInput, dataType: "CHAT_MESSAGE" }
             setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
-            AppGlobals.connections
-            .forEach((c) => c.connection.send(chatMessageTransfer));
+            sendSomeData(chatMessageTransfer);
             setMessageInput("");
         }
     };

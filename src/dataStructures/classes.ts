@@ -9,6 +9,7 @@ export class FileTransfer implements FileInfoInterface {
       readonly type: string,
 
       readonly selectedFile: File | null = null, // only sender needs it, just to keep track of what file he needs to send   
+      public isPaused: boolean = false,
       public senderPeerID: string | null = null,
       public receiverPeers: userAccepts[] = [],
       
