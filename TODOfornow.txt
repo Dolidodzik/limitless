@@ -13,5 +13,4 @@ kolejnosc importow / importy tech
 Id vs id vs ID
 LINTING
 czyszczenie komentarzy / console logow
-ABSTRACT MORE FUNCTIONS / STUFF INTO SEPARATE COMPONENTS once more
 CLEANUP OVERALL WSZYSTKO once more

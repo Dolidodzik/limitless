@@ -3,13 +3,12 @@ import React, { useState, ChangeEvent, MutableRefObject, useEffect } from "react
 
 import { AppConfig } from "../config";
 import { AppGlobals } from "../globals/globals";
-import { transferProgressSpeed } from "../utils/utils";
 import { FileTransfer, senderCancelTransferMessage } from "../dataStructures/classes";
 import { calculateTotalChunks, generateRandomString } from "../utils/utils";
 import { userAccepts } from "../dataStructures/interfaces";
 import { ChatRef } from "./chat";
 import { sendSomeData, sendTransferPauseNotification } from "../utils/senderFunctions";
-import { dealWithTransferProgressUpdates, transferProgressSize, transferProgressEstimatedTime } from '../utils/utils';
+import { dealWithTransferProgressUpdates, uploadProgressValues } from '../utils/utils';
 
 
 
@@ -185,9 +184,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                     <span> 
                     
                     Progress: {transfer.progress}, 
-                    <br/> Speed: {transferProgressSpeed(transfer.last5updates, transfer.progress).toFixed(2)} MB/s 
-                    <br/> size: {transferProgressSize(transfer.last5updates, transfer.totalChunks)}
-                    <br/> time left: {transferProgressEstimatedTime(transfer.last5updates, transfer.totalChunks, transfer.progress)?.toFixed(2)}
+                    { JSON.stringify(uploadProgressValues(transfer, null)) }
                     </span>
                   }
                 </span>
@@ -213,9 +210,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
               {transfer.receiverPeers.map((receiver) => (
                 <div key={receiver.id}> 
                   * {receiver.id}, accepted: {receiver.isAccepted.toString()}, with progress {receiver.progress}%
-                  <br/> speed: {transferProgressSpeed(receiver.last5updates, transfer.progress).toFixed(2)}
-                  <br/> size: {transferProgressSize(receiver.last5updates, transfer.totalChunks)}
-                  <br/> time left: {transferProgressEstimatedTime(receiver.last5updates, transfer.totalChunks, transfer.progress)?.toFixed(2)}
+                  XX{ JSON.stringify(uploadProgressValues(transfer, receiver.id)) }XX
                   <br/> 
                   {transfer.isPaused       
                     ? <div> This transfer is paused <button onClick={() => {resumeOutgoingTransfer(transfer.id)}}> RESUME UPLOAD </button> </div>

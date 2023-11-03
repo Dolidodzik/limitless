@@ -1,12 +1,10 @@
 // FOR NOW I WILL KEEP HERE ALL STUFF THAT IS EASILY SEPARATABLE FROM APP.TSX, LATER THERE WILL BE MORE SPLITING DONE
 
-import React, {RefObject} from 'react';
-import { ChatMessage, ConnectionData, progressUpdateMessage, chunkProgress } from '../dataStructures/interfaces';
-import { blobDict } from '../dataStructures/types';
-import { FileTransfer } from '../dataStructures/classes'; 
+import { progressUpdateMessage, chunkProgress } from '../dataStructures/interfaces';
 import { AppConfig } from '../config';
 import { AppGlobals } from '../globals/globals';
 import { sendSomeData } from './senderFunctions';
+import { FileTransfer } from '../dataStructures/classes';
 
 
 export function generateRandomString(length: number): string {
@@ -56,66 +54,59 @@ export function sendProgressUpdateMessage(progress: number, senderPeerId: string
   sendSomeData(progressUpdate, senderPeerId);
 }
 
-export function transferProgressSpeed(last5chunks: chunkProgress[] | null, progress: number | null) {
 
-  // if there's no enough data to approximate speed, or progress is already 100, then just return speed as 0
-  if (!last5chunks || last5chunks.length < 2 || progress == 100) {
-    return 0;
+
+export function uploadProgressValues(transfer: FileTransfer, receiverId: string | null = null){
+
+  let receiverPeer = transfer.receiverPeers.find(obj => {
+    return obj.id === receiverId
+  })
+
+  let last5updates;
+  if(!receiverPeer){ // means this peer is receiver
+    last5updates = transfer.last5updates;
+  } else if(receiverPeer) { // means this peer is sender
+    last5updates = receiverPeer.last5updates;
+  } else {
+    console.log("not enough data to calucuate progress")
+    return "nothing"
+  }
+
+  if(!last5updates){
+    return "nothing"
   }
 
   const chunkSizeKB = AppConfig.chunkSize / 1000;
-  const numberOfChunks = last5chunks.length;
-  
+  const fullSize = (transfer.totalChunks * chunkSizeKB / 1000)
+  const alreadyTransferredSize = (last5updates[0].chunkNumber * chunkSizeKB / 1000)
+
+  if(transfer.isPaused == true || transfer.progress == 100){
+    return {
+      fullSize: fullSize, // in MB
+      alreadyTransferredSize: alreadyTransferredSize, // in MB
+      timeLeft: 0, // in seconds
+      speed: 0 // in MBps
+    }
+  }
+
+  const numberOfChunks = last5updates.length;
   // Calculate the total time taken to upload the chunks (in milliseconds).
-  const totalTime = last5chunks[0].time - last5chunks[numberOfChunks - 1].time;
-
+  const totalTime = last5updates[0].time - last5updates[numberOfChunks - 1].time;
   // Calculate the total size of the chunks (in kilobytes).
-  const totalSizeKB = (last5chunks[0].chunkNumber - last5chunks[numberOfChunks - 1].chunkNumber) * chunkSizeKB;
-
-  // Calculate the upload speed (KB/s).
-  const uploadSpeedKBps = totalSizeKB / (totalTime / 1000);
-
-  // output is in MB/s rounded to 2 decimal places
-  return (uploadSpeedKBps/1000)
-}
-
-export function transferProgressSize(last5chunks: chunkProgress[] | null, totalChunks: number){
-
-  if(!last5chunks || !last5chunks[0])
-    return;
-
-  const chunkSizeKB = AppConfig.chunkSize / 1000;
-  const fullSize = (totalChunks * chunkSizeKB / 1000).toFixed(2)
-  const alreadyTransferredSize = (last5chunks[0].chunkNumber * chunkSizeKB / 1000).toFixed(2)
-
-  return alreadyTransferredSize+ "MB / "+ fullSize +"MB "
-}
-
-export function transferProgressEstimatedTime(last5chunks: chunkProgress[] | null, totalChunks: number, progress: number | null){
-
-  console.log("SIMA: ", last5chunks, " : ", totalChunks, " : ", progress)
-
-  if(progress == 100)
-    return 0
-
-  if(!last5chunks || last5chunks.length < 2)
-    return;
-
-  const chunkSizeKB = AppConfig.chunkSize / 1000;
-
-  const fullSize = (totalChunks * chunkSizeKB / 1000)
-  const alreadyTransferredSize = (last5chunks[0].chunkNumber * chunkSizeKB / 1000)
+  const totalSizeKB = (last5updates[0].chunkNumber - last5updates[numberOfChunks - 1].chunkNumber) * chunkSizeKB;
+  // Calculate the upload speed (MB/s).
+  const uploadSpeedMBps = (totalSizeKB / (totalTime / 1000)) / 1000;
 
   const MBsLeftToTransfer = fullSize - alreadyTransferredSize;
-  const uploadSpeedMBps = transferProgressSpeed(last5chunks, progress);
-
-  const timeLeft = MBsLeftToTransfer / uploadSpeedMBps; // in seconds
-
-  console.log(timeLeft)
-
-  return timeLeft;
+  const timeLeft = MBsLeftToTransfer / uploadSpeedMBps; 
+  
+  return {
+    fullSize: fullSize.toFixed(2), 
+    alreadyTransferredSize: alreadyTransferredSize.toFixed(2), 
+    timeLeft: timeLeft.toFixed(2), 
+    speed: uploadSpeedMBps.toFixed(2)
+  }
 }
-
 
 // should be called every 500ms. This function loops over every transfer, and checks how progress is going
 export function dealWithTransferProgressUpdates(forceUpdate: () => void){

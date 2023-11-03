@@ -180,11 +180,9 @@ export function handleReceivedData (
     } else if(data.dataType == "NICKNAME_MANIFEST"){ // other peer is letting know about his username
       const connectionData = AppGlobals.connections.find((connectionData) => connectionData.peerId === senderPeerId);
       if(connectionData){
-        console.log("SETTING NICKNAME")
         connectionData.peerNickname = data.nickname;
-        console.log(connectionData)
+        forceUpdate();
       }
-        
     } else if(data.dataType == "TRANSFER_PAUSE_NOTIFICATION"){
       const index = AppGlobals.incomingFileTransfers.findIndex(fileInfo => fileInfo.id === data.transferID);
       AppGlobals.incomingFileTransfers[index].isPaused = data.isPaused;
