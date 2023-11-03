@@ -1,7 +1,7 @@
 import { AppGlobals } from "../globals/globals";
 import { AppConfig } from "../config";
 import { calculateTotalChunks } from "./utils";
-import { ConnectionData, transferPauseNotification } from "../dataStructures/interfaces";
+import { ConnectionData, transferPauseNotification, nicknameManifest } from "../dataStructures/interfaces";
 
 
 export function sendSomeData(
@@ -44,6 +44,14 @@ export function sendTransferPauseNotification(isPaused: boolean, transferID: str
   });
 
   sendSomeData(notification, targetPeers);
+}
+
+export function sendNicknameManifest(nickname: string, targetPeer: string){
+  const nicknameManifest: nicknameManifest = {
+    nickname: nickname,
+    dataType: "NICKNAME_MANIFEST"
+  }
+  sendSomeData(nicknameManifest, targetPeer);
 }
 
 export const sendChunksData = async (file: File, connectionData: ConnectionData, transferID: string) => {

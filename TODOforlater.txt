@@ -6,3 +6,5 @@ when receiving, there should be more validation
 kasowanie wszystkiego po reset connection
 automated testing 
 ACTUAL VALIDATION WHAT FILE WE ARE RECEIVING, IF FILE IS 10MB, WE SHOULDNT MORE CHUNKS THAN 10MB DOES IT MAKE SENSE. THINK ABOUT OTHER WAYS MALICIOUS ACTORS COULD TRY TO EXPLOIT PEER 2 PEER CONNECTION, THINK ABOUT USERS SAFETY
+checking if transferID matches PeerID when receiving each chunk
+testowanie file zgodnosci checksuma jeszcze - https://github.com/satazor/js-spark-md5

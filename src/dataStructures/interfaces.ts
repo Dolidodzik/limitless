@@ -13,6 +13,12 @@ export interface ChatMessage {
 export interface ConnectionData {
   connection: DataConnection;
   peerId: string;
+  peerNickname: string | null;
+}
+
+export interface nicknameManifest{
+  nickname: string,
+  dataType: string
 }
 
 export interface FileInfoInterface {

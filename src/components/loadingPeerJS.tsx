@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 
 import { AppGlobals } from "../globals/globals";
-import { AppConfig } from "../config";
 import { removeConnectionByID } from "../globals/globalFunctions";
 import Peer from "peerjs";
 import { ConnectionData } from "../dataStructures/interfaces";
 import { handleReceivedData } from "../utils/receiverFunctions";
 import { ChatRef } from "./chat";
+import { generateRandomNickname } from "../utils/utils";
+import { sendNicknameManifest } from "../utils/senderFunctions";
 
-// dirty workaround
 
 
 export const LoadingPeerJS = (props: {
@@ -33,11 +33,14 @@ export const LoadingPeerJS = (props: {
             const newConnectionData: ConnectionData = {
               connection: conn,
               peerId: conn.peer,
+              peerNickname: null
             };
             AppGlobals.connections.push(newConnectionData);
     
             if(props.chatRef.current)
                 props.chatRef.current.addMessageToChatLogs("Connection established with: " + conn.peer, "SYSTEM_MESSAGE") 
+            
+            sendNicknameManifest(AppGlobals.ownNickname, conn.peer);
             props.forceUpdate();
           });
     
@@ -82,10 +85,13 @@ export const LoadingPeerJS = (props: {
             const newConnectionData: ConnectionData = {
               connection: conn,
               peerId: conn.peer,
+              peerNickname: null
             };
             AppGlobals.connections.push(newConnectionData)
             if(props.chatRef && props.chatRef.current)
                 props.chatRef.current.addMessageToChatLogs("Connection established with: " + conn.peer, "SYSTEM_MESSAGE")
+
+            sendNicknameManifest(AppGlobals.ownNickname, conn.peer);
 
             props.forceUpdate();
           });

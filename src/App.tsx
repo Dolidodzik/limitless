@@ -32,7 +32,8 @@ const App: React.FC = () => {
     <div className="App">
       <h1>Peer-to-Peer Chat</h1>
 
-      <h1> Your peer ID is: {myPeerId} </h1>  
+      <h3> Your peer ID is: {myPeerId} </h3>  
+      <h1> Your nickname is {AppGlobals.ownNickname} </h1>
 
       <br/>
 

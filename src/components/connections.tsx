@@ -20,7 +20,8 @@ export const Connections = (props: {chatRef: React.RefObject<ChatRef | null>, di
         <div className="connections">
             <h1>Connected to Peers:</h1>
             {AppGlobals.connections.map((connection) => (
-                <div key={connection.peerId}> * {connection.peerId} 
+                <div key={connection.peerId}> 
+                * {connection.peerId} <b>  | nickname: {connection.peerNickname} </b>
                 <button onClick={() => props.disconnectFromSelectedClient(connection.peerId)}> disconnect </button> 
                 </div>
             ))}

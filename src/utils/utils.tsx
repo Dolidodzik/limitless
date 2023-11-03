@@ -32,6 +32,19 @@ export function isJsonString(str: string): boolean {
   return true;
 }
 
+export function generateRandomNickname(){
+  let result = '';
+  const characters = '0123456789';
+
+  // random 5 numbers just for now, later we can replace generating random usernames with usernames from either discord, chosen manually by user or whatever else
+  for (let i = 0; i < 5; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    result += characters.charAt(randomIndex);
+  }
+
+  return "nickname"+result;
+}
+
 export function sendProgressUpdateMessage(progress: number, senderPeerId: string, transferID: string, last5updates: chunkProgress[]){ // chunk progress can be null, because if it's just null then it means that we want to set speed to 0 and that's it
   // sending progress update to the sender
   const progressUpdate: progressUpdateMessage = {

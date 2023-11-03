@@ -128,6 +128,8 @@ export function handleReceivedData (
     forceUpdate: () => void,
     addMessageToChatLogs: (message: string, peerId: string) => void
 ){
+
+    console.log("RECEIVED SOMETHING: ", data)
     
     if(!data || !data.dataType || !addMessageToChatLogs){
       console.warn("Received some data with nonexistent dataType property")
@@ -175,6 +177,14 @@ export function handleReceivedData (
       addMessageToChatLogs(data.text, senderPeerId);
     } else if (data.dataType == "SENDER_CANCELLED_TRANSFER"){ // sender is letting know that he cancelled the transfer
       // handle transfer being canclled somehow - transfer is effectively over, it can be deleted or kept alive just to let end user know what happened with it 
+    } else if(data.dataType == "NICKNAME_MANIFEST"){ // other peer is letting know about his username
+      const connectionData = AppGlobals.connections.find((connectionData) => connectionData.peerId === senderPeerId);
+      if(connectionData){
+        console.log("SETTING NICKNAME")
+        connectionData.peerNickname = data.nickname;
+        console.log(connectionData)
+      }
+        
     } else if(data.dataType == "TRANSFER_PAUSE_NOTIFICATION"){
       const index = AppGlobals.incomingFileTransfers.findIndex(fileInfo => fileInfo.id === data.transferID);
       AppGlobals.incomingFileTransfers[index].isPaused = data.isPaused;
