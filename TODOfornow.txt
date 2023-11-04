@@ -1,14 +1,9 @@
 // in progress
-NICKNAMES ZAMIAST ZJEBANYCH ID - dziala tylko state refresh connetion.tsx potrzeba
-PAUSED NOTIFICATION???
-
-// todo
 dissalow user from starting transfer when no receivers are chosen, notyfing user properly
 zwracanie jakis bledow jak plik jest pusty itd, wogole jakis error handling
-deleting transfer notification for other peer etc
 
+// todo
 // na sam koniec zeby poprzegladac wszystko raz jeszcze
-importowanie / exportowanie defaulta a nie {} wszedzie
 kolejnosc importow / importy tech
 Id vs id vs ID
 LINTING

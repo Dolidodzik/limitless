@@ -1,7 +1,5 @@
 import { FileTransfer } from '../dataStructures/classes'; 
-import { sendProgressUpdateMessage } from './utils';
 import { sendChunksData } from './senderFunctions';
-import { ChatMessage } from '../dataStructures/interfaces';
 import { AppGlobals } from '../globals/globals';
 
 
@@ -89,7 +87,7 @@ export function receiveFileChunk(
         // Sort the received chunks by chunkOrder
         const beforeSorting = AppGlobals.receivedChunks
         AppGlobals.receivedChunks[transferID].chunks.sort((a, b) => a.chunkOrder - b.chunkOrder);
-        if(beforeSorting == AppGlobals.receivedChunks){
+        if(beforeSorting === AppGlobals.receivedChunks){
             console.log("before sorting chunks they were fine")
         }else{
             console.log("before sorting chunks had order issue")
@@ -142,7 +140,7 @@ export function handleReceivedData (
         data,
         forceUpdate
       );
-    } else if (data.dataType == "TRANSFER_PROGRESS_UPDATE") {
+    } else if (data.dataType === "TRANSFER_PROGRESS_UPDATE") {
       // Received progress update from receiver
       const fileInfo = AppGlobals.outgoingFileTransfers.find((file) => file.id === data.transferID);
       if (fileInfo) {
@@ -157,7 +155,7 @@ export function handleReceivedData (
         data,
         forceUpdate
       );
-    } else if (data.dataType == "FILE_TRANSFER_OFFER") { // sender chose files, and asks peer for permission to start sending them
+    } else if (data.dataType === "FILE_TRANSFER_OFFER") { // sender chose files, and asks peer for permission to start sending them
       if(data && data.totalChunks && data.size){ // checking if data is valid offer, or at least looks like it
         console.log("file offer json string received ", data)
         let incomingOffer = new FileTransfer(
@@ -167,23 +165,38 @@ export function handleReceivedData (
           data.id,
           data.type
         );
-        incomingOffer.setPeerIDs(senderPeerId, [{id: myPeerId, isAccepted: false, progress: null, last5updates: null}])
+        incomingOffer.setPeerIDs(senderPeerId, [{id: myPeerId, isAccepted: false, progress: null, last5updates: null, isAborted: false}])
         AppGlobals.incomingFileTransfers.push(incomingOffer);
         forceUpdate();
       }
-    } else if (data.dataType == "CHAT_MESSAGE" && data.text){
+    } else if (data.dataType === "CHAT_MESSAGE" && data.text){
       // Handling usual text chat message
       console.log("Received normal text message:", data);
       addMessageToChatLogs(data.text, senderPeerId);
-    } else if (data.dataType == "SENDER_CANCELLED_TRANSFER"){ // sender is letting know that he cancelled the transfer
+    } else if (data.dataType === "SENDER_CANCELLED_TRANSFER"){ // sender is letting know that he cancelled the transfer
       // handle transfer being canclled somehow - transfer is effectively over, it can be deleted or kept alive just to let end user know what happened with it 
-    } else if(data.dataType == "NICKNAME_MANIFEST"){ // other peer is letting know about his username
+      const index = AppGlobals.incomingFileTransfers.findIndex(fileInfo => fileInfo.id === data.transferID);
+      if(index !== -1)
+        AppGlobals.incomingFileTransfers[index].isAborted = true;
+    } else if(data.dataType === "RECEIVER_CANCELLED_TRANSFER"){
+      console.log("CANCELLING TRANSFER")
+      console.log("CANCELLING TRANSFER")
+      console.log("CANCELLING TRANSFER")
+      console.log("CANCELLING TRANSFER")
+      console.log("CANCELLING TRANSFER")
+      console.log(data)
+      console.log(AppGlobals.outgoingFileTransfers)
+      const transferIndex = AppGlobals.outgoingFileTransfers.findIndex(fileInfo => fileInfo.id === data.transferID);
+      const receiverPeerIndex = AppGlobals.outgoingFileTransfers[transferIndex].receiverPeers.findIndex(receiverPeer => receiverPeer.id === senderPeerId);
+      AppGlobals.outgoingFileTransfers[transferIndex].receiverPeers[receiverPeerIndex].isAborted = true;
+      forceUpdate();
+    } else if(data.dataType === "NICKNAME_MANIFEST"){ // other peer is letting know about his username
       const connectionData = AppGlobals.connections.find((connectionData) => connectionData.peerId === senderPeerId);
       if(connectionData){
         connectionData.peerNickname = data.nickname;
         forceUpdate();
       }
-    } else if(data.dataType == "TRANSFER_PAUSE_NOTIFICATION"){
+    } else if(data.dataType === "TRANSFER_PAUSE_NOTIFICATION"){
       const index = AppGlobals.incomingFileTransfers.findIndex(fileInfo => fileInfo.id === data.transferID);
       AppGlobals.incomingFileTransfers[index].isPaused = data.isPaused;
     } else {

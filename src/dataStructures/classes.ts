@@ -16,6 +16,7 @@ export class FileTransfer implements FileInfoInterface {
       // only receiver uses those
       public progress: number | null = null, 
       public last5updates: chunkProgress[] = [],
+      public isAborted: boolean = false
     ) {}
     
     public setPeerIDs = (senderPeerID: string, receiverPeers: userAccepts[]) => {

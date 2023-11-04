@@ -1,20 +1,17 @@
 
-import React, { useState, ChangeEvent, MutableRefObject, useEffect } from "react";
+import React, { useState, ChangeEvent, useEffect } from "react";
 
 import { AppConfig } from "../config";
 import { AppGlobals } from "../globals/globals";
-import { FileTransfer, senderCancelTransferMessage } from "../dataStructures/classes";
+import { FileTransfer, senderCancelTransferMessage, receiverCancelTransferMessage } from "../dataStructures/classes";
 import { calculateTotalChunks, generateRandomString } from "../utils/utils";
 import { userAccepts } from "../dataStructures/interfaces";
 import { ChatRef } from "./chat";
 import { sendSomeData, sendTransferPauseNotification } from "../utils/senderFunctions";
 import { dealWithTransferProgressUpdates, uploadProgressValues } from '../utils/utils';
 
-
-
 let progressUpdateHandle: any;
-
-
+ 
 export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject<ChatRef | null>, disconnectFromSelectedClient: (peerId: string) => void}) => {
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     // IDs of peers user chose to send file to
@@ -33,10 +30,10 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
         console.log('Cleanup performed');
         clearInterval(progressUpdateHandle);
       };
-    }, []);
+    });
 
     const handleFileSubmit = () => {
-        if (selectedFiles.length == 0){
+        if (selectedFiles.length === 0){
           console.log("NO FILE SELECTED PLEASE SELECT FILE");
           return;
         } 
@@ -57,7 +54,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           sendSomeData(offer, targetPeers);
       
           // when connection is already sent, we edit it for this client only and assign correct peer ids
-          const connectedPeerIDs: userAccepts[] = targetPeers.map(targetPeerID => ({ id: targetPeerID, isAccepted: false, progress: null, last5updates: null }));
+          const connectedPeerIDs: userAccepts[] = targetPeers.map(targetPeerID => ({ id: targetPeerID, isAccepted: false, progress: null, last5updates: null, isAborted: false }));
           
           outgoingTransferOffer.setPeerIDs(props.myPeerId, connectedPeerIDs);
           AppGlobals.outgoingFileTransfers.push(outgoingTransferOffer)
@@ -112,7 +109,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
         forceUpdate();
     }
 
-    const deleteOutgoingTransfer = (transferID: string) => {
+    const deleteActiveOutgoingTransfer = (transferID: string) => {
         const transferIndex = AppGlobals.outgoingFileTransfers.findIndex(
           transfer => transfer.id === transferID
         );
@@ -130,6 +127,21 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
         
         forceUpdate();
     }
+
+    const deleteActiveIncomingTransfer = (transferID: string) => {
+      const transferIndex = AppGlobals.incomingFileTransfers.findIndex(
+        transfer => transfer.id === transferID
+      );
+      console.log(transferIndex)
+      console.log(AppGlobals.incomingFileTransfers)
+      // sending data only to peers that are receiving this file transfer
+      let cancelMessage = new receiverCancelTransferMessage(transferID)
+      sendSomeData(cancelMessage, AppGlobals.incomingFileTransfers[transferIndex].senderPeerID)
+  
+      AppGlobals.incomingFileTransfers.splice(transferIndex, 1);
+      
+      forceUpdate();
+  }
 
     const pauseOutgoingTransfer = (transferID: string) => {
       console.log("PAUSING TRANSFER: ", transferID)
@@ -178,6 +190,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
               {transfer.receiverPeers[0].isAccepted ? (
                 <span> 
                   You already accepted this transfer.
+                  <button onClick={() => deleteActiveIncomingTransfer(transfer.id)}> DELETE THIS TRANSFER </button>
                   {transfer.progress == null ? 
                     <span> Sender haven't started sending yet. </span>
                     : 
@@ -192,10 +205,14 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                 <span> You didn't accept this transfer. <button onClick={() => acceptTransfer(transfer.id)}> accept </button> </span>
               )}
               <br/>
-              {transfer.isPaused       
-                ? <div> This transfer is paused </div>
-                : <div> This transfer is going now </div>
+              {transfer.isAborted   
+                ? <div> This transfer is aborted </div>
+                : <div> {transfer.isPaused       
+                  ? <div> This transfer is paused </div>
+                  : <div> This transfer is going now </div>
+                } </div>
               }
+
             </div>
           ))}
 
@@ -204,7 +221,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
             <div key={transfer.id} className="box"> 
               * <b>{transfer.id}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks. <br/> 
               
-              <button onClick={() => deleteOutgoingTransfer(transfer.id)}> Delete this transfer </button> 
+              <button onClick={() => deleteActiveOutgoingTransfer(transfer.id)}> Delete this transfer </button> 
 
               To peers:
               {transfer.receiverPeers.map((receiver) => (
@@ -212,10 +229,16 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                   * {receiver.id}, accepted: {receiver.isAccepted.toString()}, with progress {receiver.progress}%
                   XX{ JSON.stringify(uploadProgressValues(transfer, receiver.id)) }XX
                   <br/> 
-                  {transfer.isPaused       
-                    ? <div> This transfer is paused <button onClick={() => {resumeOutgoingTransfer(transfer.id)}}> RESUME UPLOAD </button> </div>
-                    : <div> This transfer is going now <button onClick={() => {pauseOutgoingTransfer(transfer.id)}}> PAUSE UPLOAD </button> </div>
+
+                  {receiver.isAborted       
+                    ? <div> This transfer was aborted by receiver  </div>
+                    : <div> {transfer.isPaused       
+                      ? <div> This transfer is paused <button onClick={() => {resumeOutgoingTransfer(transfer.id)}}> RESUME UPLOAD </button> </div>
+                      : <div> This transfer is going now <button onClick={() => {pauseOutgoingTransfer(transfer.id)}}> PAUSE UPLOAD </button> </div>
+                    } </div>
                   }
+
+
                 </div>
               ))}
               <br/>

@@ -80,10 +80,10 @@ export function uploadProgressValues(transfer: FileTransfer, receiverId: string 
   const fullSize = (transfer.totalChunks * chunkSizeKB / 1000)
   const alreadyTransferredSize = (last5updates[0].chunkNumber * chunkSizeKB / 1000)
 
-  if(transfer.isPaused == true || transfer.progress == 100){
+  if(transfer.isPaused === true || transfer.progress === 100 || transfer.isAborted){
     return {
-      fullSize: fullSize, // in MB
-      alreadyTransferredSize: alreadyTransferredSize, // in MB
+      fullSize: fullSize.toFixed(2), // in MB
+      alreadyTransferredSize: alreadyTransferredSize.toFixed(2), // in MB
       timeLeft: 0, // in seconds
       speed: 0 // in MBps
     }
