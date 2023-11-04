@@ -6,7 +6,6 @@ import Peer from "peerjs";
 import { ConnectionData } from "../dataStructures/interfaces";
 import { handleReceivedData } from "../utils/receiverFunctions";
 import { ChatRef } from "./chat";
-import { generateRandomNickname } from "../utils/utils";
 import { sendNicknameManifest } from "../utils/senderFunctions";
 
 
@@ -66,7 +65,7 @@ export const LoadingPeerJS = (props: {
         return () => {
           resetApp();
         };
-      }, []);
+      });
 
       const resetApp = () => {
         AppGlobals.connections.forEach((c) => c.connection.close());

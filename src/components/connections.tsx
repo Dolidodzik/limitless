@@ -14,8 +14,6 @@ export const Connections = (props: {chatRef: React.RefObject<ChatRef | null>, di
         forceUpdate();
     };
 
-    console.log("AppGlobals connections in connections: ", AppGlobals.connections)
-
     return (
         <div className="connections">
             <h1>Connected to Peers:</h1>

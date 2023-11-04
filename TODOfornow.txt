@@ -3,9 +3,4 @@ dissalow user from starting transfer when no receivers are chosen, notyfing user
 zwracanie jakis bledow jak plik jest pusty itd, wogole jakis error handling
 
 // todo
-// na sam koniec zeby poprzegladac wszystko raz jeszcze
-kolejnosc importow / importy tech
 Id vs id vs ID
-LINTING
-czyszczenie komentarzy / console logow
-CLEANUP OVERALL WSZYSTKO once more

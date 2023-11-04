@@ -24,17 +24,15 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
         dealWithTransferProgressUpdates(forceUpdate)
       }
       , AppConfig.transferProgressUpdatesInterval);
-  
-      // A cleanup function can be returned from the effect.
+
       return () => {
-        console.log('Cleanup performed');
         clearInterval(progressUpdateHandle);
       };
     });
 
     const handleFileSubmit = () => {
         if (selectedFiles.length === 0){
-          console.log("NO FILE SELECTED PLEASE SELECT FILE");
+          alert("NO FILE SELECTED PLEASE SELECT FILE");
           return;
         } 
     
@@ -63,7 +61,6 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     }
 
     const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
-        console.log("FILES WERE SELECTED", event.target.files);
         const newFiles = Array.from(event.target.files || []);
     
         if (newFiles.length === 0) {
@@ -132,8 +129,6 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
       const transferIndex = AppGlobals.incomingFileTransfers.findIndex(
         transfer => transfer.id === transferID
       );
-      console.log(transferIndex)
-      console.log(AppGlobals.incomingFileTransfers)
       // sending data only to peers that are receiving this file transfer
       let cancelMessage = new receiverCancelTransferMessage(transferID)
       sendSomeData(cancelMessage, AppGlobals.incomingFileTransfers[transferIndex].senderPeerID)
@@ -144,7 +139,6 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
   }
 
     const pauseOutgoingTransfer = (transferID: string) => {
-      console.log("PAUSING TRANSFER: ", transferID)
       const index = AppGlobals.outgoingFileTransfers.findIndex(fileInfo => fileInfo.id === transferID);
       AppGlobals.outgoingFileTransfers[index].isPaused = true;
       sendTransferPauseNotification(true, transferID)
@@ -152,7 +146,6 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     }
 
     const resumeOutgoingTransfer = (transferID: string) => {
-      console.log("resuming TRANSFER: ", transferID)
       const index = AppGlobals.outgoingFileTransfers.findIndex(fileInfo => fileInfo.id === transferID);
       AppGlobals.outgoingFileTransfers[index].isPaused = false;
       sendTransferPauseNotification(false, transferID)

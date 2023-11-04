@@ -9,8 +9,6 @@ export function receiveFileTransferFileAccept(
     data: any,
     forceUpdate: () => void
 ){ 
-
-    console.log("FILE TRANSFER ACCEPT RECEIVED - OTHER PEER ACCEPTED THIS TRANSFER.");
     const fileIndex = AppGlobals.outgoingFileTransfers.findIndex(file => file.id === data.id);
     const fileToUpdate = AppGlobals.outgoingFileTransfers[fileIndex];
     const updatedFile = { ...fileToUpdate };
@@ -25,13 +23,11 @@ export function receiveFileTransferFileAccept(
     // chunks go wrrrrrrrr (actual file transfer starts)
     const connectionData = AppGlobals.connections.find((connectionData) => connectionData.peerId === senderPeerId);
 
-    if(updatedFile.selectedFile && connectionData){
-        console.log("SENDING CHUNKS")
-        AppGlobals.outgoingFileTransfers[fileIndex].progress = 0;
+    if(updatedFile.selectedFile && connectionData){        AppGlobals.outgoingFileTransfers[fileIndex].progress = 0;
         sendChunksData(updatedFile.selectedFile, connectionData, updatedFile.id)
         forceUpdate()
     }else{
-        console.log("BIG ERROR SELECTED FILE IS EMPTY, CANNOT SEND OR CONNECTION DATA IS EMPTY FOR SOME REASON")
+        alert("BIG ERROR SELECTED FILE IS EMPTY, CANNOT SEND OR CONNECTION DATA IS EMPTY FOR SOME REASON")
     }
 
     forceUpdate();
@@ -45,7 +41,6 @@ export function receiveFileChunk(
         forceUpdate: () => void
     ){ 
 
-    //console.log("RECEIVED FILE_CHUNK", data);
     const { chunk, currentChunk, totalChunks, name, type, transferID, chunkOrder } = data;
     const chunkData = new Uint8Array(chunk);
     const fileChunk = new Blob([chunkData], { type });
@@ -78,7 +73,7 @@ export function receiveFileChunk(
             AppGlobals.incomingFileTransfers[transferIndex].progress = progress;
             forceUpdate()
         } else {
-            console.log(`No reciver transfer found with ID ${transferID}.`);
+            alert(`No reciver transfer found with ID ${transferID}.`);
         }
     }
 
@@ -88,9 +83,9 @@ export function receiveFileChunk(
         const beforeSorting = AppGlobals.receivedChunks
         AppGlobals.receivedChunks[transferID].chunks.sort((a, b) => a.chunkOrder - b.chunkOrder);
         if(beforeSorting === AppGlobals.receivedChunks){
-            console.log("before sorting chunks they were fine")
+          // console.log("before sorting chunks they were fine")
         }else{
-            console.log("before sorting chunks had order issue")
+          alert("before sorting chunks had order issue")
         }
 
         const combinedChunks = AppGlobals.receivedChunks[transferID].chunks.map(chunkInfo => chunkInfo.blob);
@@ -126,9 +121,6 @@ export function handleReceivedData (
     forceUpdate: () => void,
     addMessageToChatLogs: (message: string, peerId: string) => void
 ){
-
-    console.log("RECEIVED SOMETHING: ", data)
-    
     if(!data || !data.dataType || !addMessageToChatLogs){
       console.warn("Received some data with nonexistent dataType property")
       return;
@@ -157,7 +149,6 @@ export function handleReceivedData (
       );
     } else if (data.dataType === "FILE_TRANSFER_OFFER") { // sender chose files, and asks peer for permission to start sending them
       if(data && data.totalChunks && data.size){ // checking if data is valid offer, or at least looks like it
-        console.log("file offer json string received ", data)
         let incomingOffer = new FileTransfer(
           data.name,
           data.size,
@@ -171,7 +162,6 @@ export function handleReceivedData (
       }
     } else if (data.dataType === "CHAT_MESSAGE" && data.text){
       // Handling usual text chat message
-      console.log("Received normal text message:", data);
       addMessageToChatLogs(data.text, senderPeerId);
     } else if (data.dataType === "SENDER_CANCELLED_TRANSFER"){ // sender is letting know that he cancelled the transfer
       // handle transfer being canclled somehow - transfer is effectively over, it can be deleted or kept alive just to let end user know what happened with it 
@@ -179,13 +169,6 @@ export function handleReceivedData (
       if(index !== -1)
         AppGlobals.incomingFileTransfers[index].isAborted = true;
     } else if(data.dataType === "RECEIVER_CANCELLED_TRANSFER"){
-      console.log("CANCELLING TRANSFER")
-      console.log("CANCELLING TRANSFER")
-      console.log("CANCELLING TRANSFER")
-      console.log("CANCELLING TRANSFER")
-      console.log("CANCELLING TRANSFER")
-      console.log(data)
-      console.log(AppGlobals.outgoingFileTransfers)
       const transferIndex = AppGlobals.outgoingFileTransfers.findIndex(fileInfo => fileInfo.id === data.transferID);
       const receiverPeerIndex = AppGlobals.outgoingFileTransfers[transferIndex].receiverPeers.findIndex(receiverPeer => receiverPeer.id === senderPeerId);
       AppGlobals.outgoingFileTransfers[transferIndex].receiverPeers[receiverPeerIndex].isAborted = true;

@@ -8,20 +8,14 @@ export function sendSomeData(
     data: Object,
     targetPeer: string | string[] | null = null, // if targetPeer is null, we assume that message will be sent to everyone, if it's array of strings we send the data to every peer from the array, and if it's string we just send data to the one
 ){
-    console.log("SENDING SOMETHING")
-    console.log("targetPeer: ", targetPeer)
-    console.log("data: ", data)
-    
     if(typeof(targetPeer) == "string"){ // selected single peer
         AppGlobals.connections
         .filter((c) => targetPeer === c.peerId )
         .forEach((c) => c.connection.send(data));
     } else if (Array.isArray(targetPeer)) { // selected peers
-        console.log("SENDING TO SELECTED PEERS")
         AppGlobals.connections
         .filter((c) => targetPeer.includes(c.peerId) )
         .forEach((c) => {
-            console.log("HERE SENDING UWUUWUWUW ", c)
             c.connection.send(data);
         })
     } else { // every connected peer
@@ -59,7 +53,7 @@ export const sendChunksData = async (file: File, connectionData: ConnectionData,
     const chunkSize: number = AppConfig.chunkSize;
   
     if (!file){
-      console.log("NO FILE SELECTED??? BIG ERROR SOMETHING WENT WRONG.");
+      alert("NO FILE SELECTED??? BIG ERROR SOMETHING WENT WRONG.");
       return;
     } 
   

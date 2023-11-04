@@ -1,6 +1,5 @@
-import React, { useState, forwardRef, useImperativeHandle, ForwardedRef } from "react";
+import { useState, forwardRef, useImperativeHandle, ForwardedRef } from "react";
 import { ChatMessage } from "../dataStructures/interfaces";
-import { AppGlobals } from "../globals/globals";
 import { sendSomeData } from "../utils/senderFunctions";
 
 interface ChatProps {
