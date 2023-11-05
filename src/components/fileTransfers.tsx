@@ -28,7 +28,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
       return () => {
         clearInterval(progressUpdateHandle);
       };
-    });
+    }, []);
 
     const handleFileSubmit = () => {
         if (selectedFiles.length === 0){

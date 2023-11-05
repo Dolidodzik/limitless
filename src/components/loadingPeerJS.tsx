@@ -20,6 +20,8 @@ export const LoadingPeerJS = (props: {
 
     useEffect(() => {
       const newPeer = new Peer();
+
+      console.log("USE EFFECT IS CALLED")
     
         newPeer.on("open", (id) => {
             props.setMyPeerId(id);
@@ -65,7 +67,7 @@ export const LoadingPeerJS = (props: {
         return () => {
           resetApp();
         };
-      });
+      }, []);
 
       const resetApp = () => {
         AppGlobals.connections.forEach((c) => c.connection.close());
