@@ -2,4 +2,4 @@
 dissalow user from starting transfer when no receivers are chosen, notyfing user properly
 zwracanie jakis bledow jak plik jest pusty itd, wogole jakis error handling
 BLOCK USER IN UI FROM SENDING MESSAGES WHEN THERE ARE NO CONNECTIONS
-
+QR
