@@ -26,6 +26,7 @@ export const LoadingPeerJS = (props: {
         newPeer.on("open", (id) => {
             props.setMyPeerId(id);
             setPeer(newPeer);
+            console.log("RUNNING NEW PEER ON")
             connectToPeerFromLink(newPeer)
             props.forceUpdate();
         });
@@ -94,10 +95,6 @@ export const LoadingPeerJS = (props: {
           return;
         }
 
-        console.log("connectionslenght: ", AppGlobals.connections.length)
-        console.log("connectionslenght: ", AppGlobals.connections)
-        console.log(AppGlobals.connections[0])
-
         if (thisPeer && peerId) {
           console.log(peerId)
           const conn = thisPeer.connect(peerId);
@@ -109,14 +106,11 @@ export const LoadingPeerJS = (props: {
               peerNickname: null
             };
 
-            console.log("CREATED NEW CONNECTION DATA ", newConnectionData)
             AppGlobals.connections.push(newConnectionData)
             if(props.chatRef && props.chatRef.current)
                 props.chatRef.current.addMessageToChatLogs("Connection established with: " + conn.peer, "SYSTEM_MESSAGE")
 
-            console.log("HERE2")
             sendNicknameManifest(AppGlobals.ownNickname, conn.peer);
-            console.log("HERE3")
             props.forceUpdate();
           });
     
