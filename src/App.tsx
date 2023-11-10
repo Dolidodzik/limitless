@@ -37,6 +37,10 @@ const App: React.FC = () => {
 
       <br/>
 
+      COPY THIS LINK AND SEND TO YOUR FRIEND WHO WANTS TO SEND YOU FILES:
+      
+      <h3> http://localhost:3000/{myPeerId} </h3>
+
       <Chat myPeerId={myPeerId} ref={chatRef} />
 
       {AppGlobals.connections.length > 0 ? (

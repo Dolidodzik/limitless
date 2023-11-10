@@ -26,6 +26,7 @@ export const LoadingPeerJS = (props: {
         newPeer.on("open", (id) => {
             props.setMyPeerId(id);
             setPeer(newPeer);
+            connectToPeerFromLink(newPeer)
             props.forceUpdate();
         });
     
@@ -77,23 +78,45 @@ export const LoadingPeerJS = (props: {
           peer.destroy();
         }
       }
-    
-      const connectToPeer = () => {
-        const peerId = (document.getElementById("peerIdInput") as HTMLInputElement).value;
-        if (peer && peerId) {
-          const conn = peer.connect(peerId);
+
+      const connectToPeerFromLink = (thisPeer: Peer) => {
+
+        let peerId = window.location.pathname.replace('/','');
+        const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+
+        if(alphanumericRegex.test(peerId)){
+          alert("PROVIDED LINK CONTAINS NON-ALPHANUMERIC CHARACTER, SO IT IS INVALID")
+          return;
+        }
+
+        if(AppGlobals.connections.length > 0){
+          console.log("ALREADY CONNECTED");
+          return;
+        }
+
+        console.log("connectionslenght: ", AppGlobals.connections.length)
+        console.log("connectionslenght: ", AppGlobals.connections)
+        console.log(AppGlobals.connections[0])
+
+        if (thisPeer && peerId) {
+          console.log(peerId)
+          const conn = thisPeer.connect(peerId);
+          console.log(conn)
           conn.on("open", () => {
             const newConnectionData: ConnectionData = {
               connection: conn,
               peerId: conn.peer,
               peerNickname: null
             };
+
+            console.log("CREATED NEW CONNECTION DATA ", newConnectionData)
             AppGlobals.connections.push(newConnectionData)
             if(props.chatRef && props.chatRef.current)
                 props.chatRef.current.addMessageToChatLogs("Connection established with: " + conn.peer, "SYSTEM_MESSAGE")
 
+            console.log("HERE2")
             sendNicknameManifest(AppGlobals.ownNickname, conn.peer);
-
+            console.log("HERE3")
             props.forceUpdate();
           });
     
@@ -127,9 +150,7 @@ export const LoadingPeerJS = (props: {
 
             {props.myPeerId ? (
                 <div>
-                    <p>Enter Peer ID to connect:</p>
-                    <input type="text" id="peerIdInput" />
-                    <button onClick={connectToPeer}>Connect</button>
+
                 </div>
             ) : (
                 <div>

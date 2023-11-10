@@ -6,7 +6,6 @@ import { AppGlobals } from '../globals/globals';
 import { sendSomeData } from './senderFunctions';
 import { FileTransfer } from '../dataStructures/classes';
 
-
 export function generateRandomString(length: number): string {
   const characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "";
