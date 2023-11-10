@@ -6,6 +6,7 @@ import { Chat, ChatRef } from "./components/chat";
 import { FileTransfers } from "./components/fileTransfers";
 import { Connections } from "./components/connections";
 import { LoadingPeerJS } from "./components/loadingPeerJS";
+import QRCode from 'qrcode'
 
 
 
@@ -13,6 +14,7 @@ const App: React.FC = () => {
   const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
   const chatRef = useRef<ChatRef | null>(null);
   const [myPeerId, setMyPeerId] = useState("");
+  const [qrDataURL, setQrDataURL] = useState("");
 
   const disconnectFromSelectedClient = (peerId: string) => {
     // closing connection with unwanted peer
@@ -28,6 +30,20 @@ const App: React.FC = () => {
     forceUpdate();
   }
 
+  const returnLink = () => {
+    return "http://localhost:3000/"+myPeerId;
+  }
+
+  if(!qrDataURL && myPeerId){
+    QRCode.toDataURL(returnLink())
+    .then(url => {
+      setQrDataURL(url)
+    })
+    .catch(err => {
+      console.error(err)
+    })
+  }
+
   return (
     <div className="App">
       <h1>Peer-to-Peer Chat</h1>
@@ -39,7 +55,11 @@ const App: React.FC = () => {
 
       COPY THIS LINK AND SEND TO YOUR FRIEND WHO WANTS TO SEND YOU FILES:
       
-      <h3> http://localhost:3000/{myPeerId} </h3>
+      <h3> {returnLink()} </h3>
+
+      OR SCAN QR CODE:
+
+      <img src={qrDataURL} alt="qr not generated yet" />
 
       <Chat myPeerId={myPeerId} ref={chatRef} />
 
