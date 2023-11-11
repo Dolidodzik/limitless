@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -5,15 +9,12 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #282c34;
+  background-color: #202020;
   color: white;
 }
 
-.App {
-  width: 700px;
-  margin: 0 auto;
-  background-color: #393d45;
-}
+/* .App {
+} */
 
 .box{
   border: 3px solid black;
@@ -29,4 +30,15 @@ body {
 
 .fileTransfers {
   background-color: #771d1d;
+}
+.bg-primary{
+  background-color: #202020;
+}
+.bg-tile{
+  background-color: #b8b4b40e;
+ 
+}
+
+@layer components{
+
 }

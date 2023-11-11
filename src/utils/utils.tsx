@@ -40,7 +40,7 @@ export function generateRandomNickname(){
     result += characters.charAt(randomIndex);
   }
 
-  return "nickname"+result;
+  return "User"+result;
 }
 
 export function sendProgressUpdateMessage(progress: number, senderPeerId: string, transferID: string, last5updates: chunkProgress[]){ // chunk progress can be null, because if it's just null then it means that we want to set speed to 0 and that's it

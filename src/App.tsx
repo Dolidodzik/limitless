@@ -29,14 +29,18 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="App">
-      <h1>Peer-to-Peer Chat</h1>
-
-      <h3> Your peer ID is: {myPeerId} </h3>  
-      <h1> Your nickname is {AppGlobals.ownNickname} </h1>
-
-      <br/>
-
+    <div className="App bg-primary">
+      <h1 className="text-white text-center text-3xl py-4 ">limitless.</h1>
+    
+    <div className="xl:grid grid-cols-3 grid-rows-3 gap-4 flex flex-col ">
+      {/* first grid with users in session*/}
+      <div className="bg-tile rounded-md mx-8 my-2 flex justify-between text-center">
+        <p className="font-semibold text-lg p-4">{AppGlobals.ownNickname} {myPeerId} </p>
+        <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm" >Copy ID </button>
+      </div>
+      <div className="bg-tile rounded-md mx-8 my-2 text-center">
+          
+      </div>
       <Chat myPeerId={myPeerId} ref={chatRef} />
 
       {AppGlobals.connections.length > 0 ? (
@@ -49,6 +53,7 @@ const App: React.FC = () => {
 
         </div>
       )}
+      
 
       <LoadingPeerJS 
         chatRef={chatRef} 
@@ -56,6 +61,7 @@ const App: React.FC = () => {
         setMyPeerId={setMyPeerId} 
         forceUpdate={forceUpdate} 
       />
+      </div>
     </div>
   );
 };
