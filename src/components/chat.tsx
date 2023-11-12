@@ -1,6 +1,7 @@
 import { useState, forwardRef, useImperativeHandle, ForwardedRef } from "react";
 import { ChatMessage } from "../dataStructures/interfaces";
 import { sendSomeData } from "../utils/senderFunctions";
+import { AppGlobals } from "../globals/globals";
 
 interface ChatProps {
     myPeerId: string;
@@ -38,25 +39,29 @@ export const Chat = forwardRef(({
 
     // TODO - BLOCK USER IN UI FROM SENDING MESSAGES WHEN THERE ARE NO CONNECTIONS
     return (
-        <div className="chat">
+        <div >
             <div>
                 <h2>Chat logs:</h2>
-                {chatLogs.map((message, index) => (
-                    <div
-                        key={index}
-                        style={{ textAlign: message.peerId === myPeerId ? 'right' : 'left' }}
-                    >
-                        <b>{index}. {message.peerId}:</b> {message.message}
-                    </div>
-                ))}
+                <div className="overflow-scroll h-[20vh]">
+                    {chatLogs.map((message, index) => (
+                        <div
+                            key={index}
+                            style={{ textAlign: message.peerId === myPeerId ? 'right' : 'left' }}
+                        >
+                            <b>{index}. {message.peerId === myPeerId ? `${AppGlobals.ownNickname}` : `${message.peerId}`}:</b> {message.message}
+                        </div>
+                    ))}
+                </div>
             </div>
-
+        <div className="">
             <input
                 type="text"
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
+                className="text-black"
             />
             <button onClick={sendChatMessage}> Send </button>
+        </div>
         </div>
     );
 });
