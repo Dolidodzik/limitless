@@ -1,4 +1,4 @@
-import { useState, forwardRef, useImperativeHandle, ForwardedRef } from "react";
+import { useState, forwardRef, useImperativeHandle, ForwardedRef, useEffect, useRef } from "react";
 import { ChatMessage } from "../dataStructures/interfaces";
 import { sendSomeData } from "../utils/senderFunctions";
 import { AppGlobals } from "../globals/globals";
@@ -16,6 +16,11 @@ export const Chat = forwardRef(({
 }: ChatProps, ref: ForwardedRef<ChatRef>) => {
     const [messageInput, setMessageInput] = useState("");
     const [chatLogs, setChatLogs] = useState<ChatMessage[]>([]);
+
+    const scroll: any = useRef(null);
+    useEffect(() => {
+        scroll.current.scrollIntoView({ behavior: "smooth" });
+      }, [chatLogs]);
 
     const addMessageToChatLogs = (message: string, peerId: string) => {
         const chatMessage: ChatMessage = { peerId: peerId, message: message };
@@ -39,21 +44,22 @@ export const Chat = forwardRef(({
 
     // TODO - BLOCK USER IN UI FROM SENDING MESSAGES WHEN THERE ARE NO CONNECTIONS
     return (
-        <div >
+        <div className="">
             <div>
                 <h2>Chat logs:</h2>
-                <div className="overflow-scroll h-[20vh]">
+                <div className="overflow-y-scroll h-[20vh] p-4" id="style-1">
                     {chatLogs.map((message, index) => (
                         <div
                             key={index}
                             style={{ textAlign: message.peerId === myPeerId ? 'right' : 'left' }}
                         >
-                            <b>{index}. {message.peerId === myPeerId ? `${AppGlobals.ownNickname}` : `${message.peerId}`}:</b> {message.message}
+                            <b>{index}. {message.peerId === myPeerId ? `${AppGlobals.ownNickname}` : `${AppGlobals.connections.map((connection) => (connection.peerNickname))}`}:</b> {message.message}
                         </div>
                     ))}
+                <div ref={scroll}/>
                 </div>
             </div>
-        <div className="">
+            <div className="">
             <input
                 type="text"
                 value={messageInput}

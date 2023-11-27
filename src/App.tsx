@@ -43,51 +43,86 @@ const App: React.FC = () => {
       console.error(err)
     })
   }
+  console.log(myPeerId)
 
   return (
-    <div className="App bg-primary h-screen">
-      <h1 className="text-white text-center text-3xl py-4 ">limitless.</h1>
+    // <div className="App bg-primary h-screen">
+    //   <h1 className="text-white text-center text-3xl py-4 ">limitless.</h1>
     
-    <div className="xl:grid grid-cols-3 grid-rows-3 gap-4 flex flex-col mb-auto">
-      {/* first grid with users in session*/}
-      <div className="bg-tile rounded-md mx-8 my-2 flex flex-col justify-between text-center shadow-md">
-        <p className="font-thin  text-2xl p-4">Hi, {AppGlobals.ownNickname} </p> 
-        <div className="flex justify-evenly mb-4">
-          <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm">QR icon</button>
-          <p className="text-xl">or</p>
-          <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm" >Copy ID</button>
-        </div>
-      </div>
-      <div className="bg-tile rounded-md mx-8 my-2 text-center xl:order-first shadow-md">
-          jd
-      </div>
-      <div className="bg-tile shadow-md mx-8 rounded-md">
-        <Chat myPeerId={myPeerId} ref={chatRef} />
-      </div>
-      {AppGlobals.connections.length > 0 ? (
-        <div>
-          <Connections chatRef={chatRef} disconnectFromSelectedClient={disconnectFromSelectedClient} />
-          <FileTransfers myPeerId="cipa" chatRef={chatRef} disconnectFromSelectedClient={disconnectFromSelectedClient} />
-        </div>
-      ) : (
-        <div>
+    // <div className="xl:grid grid-cols-3 grid-rows-5 gap-4 flex flex-col mb-auto">
+    //   {/* first grid with users in session*/}
+    //   <div className="bg-tile rounded-md mx-8 my-2 flex flex-col justify-between text-center shadow-md">
+    //     <p className="font-thin text-2xl p-4">Hi, {AppGlobals.ownNickname} </p> 
+    //     <div className="flex justify-evenly mb-4">
+    //       <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm">QR icon</button>
+    //       <p className="text-xl">or</p>
+    //       <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm" >Copy ID</button>
+    //     </div>
+    //   </div>
+    //   {/* second grid with room */}
+    //   <div className="bg-tile rounded-md mx-8 my-2 xl:order-first shadow-md">
+    //       <span className="text-2xl text-left">Your room</span>
+    //       {AppGlobals.connections.map((connection) => (
+    //         <div className="flex item-center">
+    //           <p className="font-thin text-xl">{connection.peerNickname}</p>
+    //           <input type="checkbox"/>
+    //         </div>
+    //       ))
+    //       }
 
-        </div>
-      )}
+    //   </div>
+    //   {/* third grid chat */}
+    //   <div className="bg-tile shadow-md mx-8 rounded-md opacity-0 xl:opacity-100 row-span-6">
+    //     <Chat myPeerId={myPeerId} ref={chatRef}/>
+    //   </div>
+    //   {/* fourth grid connection */}
+    //   {AppGlobals.connections.length > 0 ? (
+    //     <div className="col-span-2">
+    //       <Connections chatRef={chatRef} disconnectFromSelectedClient={disconnectFromSelectedClient} />
+    //       <FileTransfers myPeerId="cipa" chatRef={chatRef} disconnectFromSelectedClient={disconnectFromSelectedClient} />
+    //     </div>
+    //   ) : (
+    //     <div>
+
+    //     </div>
+    //   )}
       
 
-      <LoadingPeerJS 
-        chatRef={chatRef} 
-        myPeerId={myPeerId} 
-        setMyPeerId={setMyPeerId} 
-        forceUpdate={forceUpdate} 
-      />
-      </div>
-      {/* footer for mobile */}
-      <div className="xl:opacity-0 sticky top-[100vh] h-12 w-full bg-black flex justify-around">
-        <p>icon</p>
-        <p>icon2</p>
-      </div>
+    //   {/* <LoadingPeerJS 
+    //     chatRef={chatRef} 
+    //     myPeerId={myPeerId} 
+    //     setMyPeerId={setMyPeerId} 
+    //     forceUpdate={forceUpdate} 
+    //   /> */}
+    //   </div>
+    //   {/* footer for mobile */}
+    //   <div className="xl:opacity-0 sticky top-[100vh] h-12 w-full bg-black flex justify-around">
+    //     <p>icon</p>
+    //     <p>icon2</p>
+    //   </div>
+    // </div>
+    <div className="grid grid-cols-3 gap-4 h-screen">
+        
+        <div className="bg-blue-500 flex items-center justify-center">
+            <p className="text-white">Item 1</p>
+        </div>
+
+        
+        <div className="bg-green-500 h-full flex items-center justify-center">
+            <p className="text-white">Item 2</p>
+        </div>
+
+        
+        <div className="bg-red-500 h-full flex items-center justify-center row-span-3">
+            <p className="text-white">Item 3 (Spans all the way down)</p>
+        </div>
+
+        
+        <div className="bg-yellow-500 h-full flex items-center justify-center col-span-2  row-span-2">
+            <p className="text-white">Item 4 (Spans 2 columns)</p>
+        </div>
+
+        
     </div>
   );
 };
