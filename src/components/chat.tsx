@@ -44,8 +44,8 @@ export const Chat = forwardRef(({
 
     // TODO - BLOCK USER IN UI FROM SENDING MESSAGES WHEN THERE ARE NO CONNECTIONS
     return (
-        <div className="">
-            <div>
+        <div className="flex flex-col justify-between">
+            <div className="max-h-full">
                 <h2>Chat logs:</h2>
                 <div className="overflow-y-scroll h-[20vh] p-4" id="style-1">
                     {chatLogs.map((message, index) => (
@@ -60,14 +60,14 @@ export const Chat = forwardRef(({
                 </div>
             </div>
             <div className="">
-            <input
-                type="text"
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                className="text-black"
-            />
-            <button onClick={sendChatMessage}> Send </button>
-        </div>
+                <input
+                    type="text"
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    className="text-black"
+                />
+                <button onClick={sendChatMessage}> Send </button>
+            </div>
         </div>
     );
 });
