@@ -44,10 +44,10 @@ export const Chat = forwardRef(({
 
     // TODO - BLOCK USER IN UI FROM SENDING MESSAGES WHEN THERE ARE NO CONNECTIONS
     return (
-        <div className="flex flex-col justify-between">
-            <div className="max-h-full">
+        <div className="">
+            <div className="">
                 <h2>Chat logs:</h2>
-                <div className="overflow-y-scroll h-[20vh] p-4" id="style-1">
+                <div className="overflow-y-scroll p-4 h-full" id="style-1">
                     {chatLogs.map((message, index) => (
                         <div
                             key={index}

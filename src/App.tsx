@@ -44,14 +44,15 @@ const App: React.FC = () => {
     })
   }
   console.log(myPeerId)
+  console.log(myPeerId)
 
   return (
     <div className="App bg-primary h-screen">
       <h1 className="text-white text-center text-3xl py-4 ">limitless.</h1>
     
-    <div className="xl:grid grid-cols-3 grid-rows-3 gap-4 flex flex-col mb-auto h-[80vh]">
+    <div className="xl:grid grid-cols-3 grid-rows-3 gap-4 flex flex-col h-[80vh] mx-8">
       {/* first grid with users in session*/}
-      <div className="bg-tile rounded-md mx-8 my-2 flex flex-col justify-between text-center shadow-md">
+      <div className="bg-tile rounded-md flex flex-col justify-between text-center shadow-md">
         <p className="font-thin text-2xl p-4">Hi, {AppGlobals.ownNickname} </p> 
         <div className="flex justify-evenly mb-4">
           <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm">QR icon</button>
@@ -60,7 +61,7 @@ const App: React.FC = () => {
         </div>
       </div>
       {/* second grid with room */}
-      <div className="bg-tile rounded-md mx-8 my-2 xl:order-first shadow-md">
+      <div className="bg-tile rounded-md xl:order-first shadow-md">
           <span className="text-2xl text-left">Your room</span>
           {AppGlobals.connections.map((connection) => (
             <div className="flex item-center">
@@ -72,28 +73,32 @@ const App: React.FC = () => {
 
       </div>
       {/* third grid chat */}
-      <div className="bg-tile shadow-md mx-8 rounded-md opacity-0 xl:opacity-100 row-span-3">
+      <div className="bg-tile shadow-md rounded-md opacity-0 xl:opacity-100 row-span-3">
         <Chat myPeerId={myPeerId} ref={chatRef}/>
       </div>
+          
       {/* fourth grid connection */}
-      {AppGlobals.connections.length > 0 ? (
-        <div className="col-span-2">
-          <Connections chatRef={chatRef} disconnectFromSelectedClient={disconnectFromSelectedClient} />
-          <FileTransfers myPeerId="cipa" chatRef={chatRef} disconnectFromSelectedClient={disconnectFromSelectedClient} />
-        </div>
-      ) : (
-        <div>
+      <div className="bg-tile shadow-md rounded-md opacity-0 xl:opacity-100 col-span-2 row-span-2">
+      <h1>Transfer</h1>
+        {AppGlobals.connections.length > 0 ? (
+          <div className="">
+            <Connections chatRef={chatRef} disconnectFromSelectedClient={disconnectFromSelectedClient} />
+            <FileTransfers myPeerId="cipa" chatRef={chatRef} disconnectFromSelectedClient={disconnectFromSelectedClient} />
+          </div>
+        ) : (
+          <div>
 
-        </div>
-      )}
+          </div>
+        )}
+      </div>
       
 
-      {/* <LoadingPeerJS 
+      <LoadingPeerJS 
         chatRef={chatRef} 
         myPeerId={myPeerId} 
         setMyPeerId={setMyPeerId} 
         forceUpdate={forceUpdate} 
-      /> */}
+      />
       </div>
       {/* footer for mobile */}
       <div className="xl:opacity-0 sticky top-[100vh] h-12 w-full bg-black flex justify-around">
