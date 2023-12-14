@@ -29,6 +29,10 @@ const App: React.FC = () => {
       chatRef.current.addMessageToChatLogs("deleted peer connection: " + peerId, "SYSTEM_MESSAGE")
     forceUpdate();
   }
+  //copy to clipboard peerId
+  const copy = async () => {
+    await navigator.clipboard.writeText("http://localhost:3000/"+myPeerId);
+  };
 
   const returnLink = () => {
     return "http://localhost:3000/"+myPeerId;
@@ -44,7 +48,7 @@ const App: React.FC = () => {
     })
   }
   console.log(myPeerId)
-  console.log(myPeerId)
+  console.log(qrDataURL)
 
   return (
     <div className="App bg-primary h-screen">
@@ -57,20 +61,23 @@ const App: React.FC = () => {
         <div className="flex justify-evenly mb-4">
           <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm">QR icon</button>
           <p className="text-xl">or</p>
-          <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm" >Copy ID</button>
+          <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm" onClick={copy}>Copy link</button>
         </div>
       </div>
       {/* second grid with room */}
-      <div className="bg-tile rounded-md xl:order-first shadow-md">
+      <div className="bg-tile rounded-md xl:order-first shadow-md flex flex-col">
           <span className="text-2xl text-left">Your room</span>
-          {AppGlobals.connections.map((connection) => (
-            <div className="flex item-center">
-              <p className="font-thin text-xl">{connection.peerNickname}</p>
-              <input type="checkbox"/>
-            </div>
-          ))
-          }
-
+          <div className="overflow-auto">
+            
+              {AppGlobals.connections.map((connection) => (
+                <div className="flex item-center">
+                  <p className="font-thin text-xl">{connection.peerNickname}</p>
+                  <input type="checkbox"/>
+                </div>
+              ))
+              }
+            
+          </div>
       </div>
       {/* third grid chat */}
       <div className="bg-tile shadow-md rounded-md opacity-0 xl:opacity-100 row-span-3">
@@ -78,8 +85,10 @@ const App: React.FC = () => {
       </div>
           
       {/* fourth grid connection */}
-      <div className="bg-tile shadow-md rounded-md opacity-0 xl:opacity-100 col-span-2 row-span-2">
-      <h1>Transfer</h1>
+      <div className="bg-tile shadow-md rounded-md opacity-0 xl:opacity-100 col-span-2 row-span-2 overflow-x-auto">
+        <div className="w-auto sticky top-0 bg-primary">
+          <h1>Transfer</h1>
+        </div>
         {AppGlobals.connections.length > 0 ? (
           <div className="">
             <Connections chatRef={chatRef} disconnectFromSelectedClient={disconnectFromSelectedClient} />

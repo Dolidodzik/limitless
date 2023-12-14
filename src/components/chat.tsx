@@ -44,31 +44,31 @@ export const Chat = forwardRef(({
 
     // TODO - BLOCK USER IN UI FROM SENDING MESSAGES WHEN THERE ARE NO CONNECTIONS
     return (
-        <div className="">
-            <div className="">
+        
+            <div className="flex flex-col h-full">
                 <h2>Chat logs:</h2>
-                <div className="overflow-y-scroll p-4 h-full" id="style-1">
+                <div className="overflow-y-scroll p-4 flex-grow" id="style-1">
                     {chatLogs.map((message, index) => (
                         <div
                             key={index}
                             style={{ textAlign: message.peerId === myPeerId ? 'right' : 'left' }}
                         >
-                            <b>{index}. {message.peerId === myPeerId ? `${AppGlobals.ownNickname}` : `${AppGlobals.connections.map((connection) => (connection.peerNickname))}`}:</b> {message.message}
+                            <b>{message.peerId === myPeerId ? `${AppGlobals.ownNickname}` : `${AppGlobals.connections.map((connection) => (connection.peerNickname))}`}: {message.message}</b> 
                         </div>
                     ))}
                 <div ref={scroll}/>
                 </div>
+            
+                <div className="mt-auto">
+                    <input
+                        type="text"
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        className="text-black"
+                    />
+                    <button onClick={sendChatMessage}> Send </button>
+                </div>
             </div>
-            <div className="">
-                <input
-                    type="text"
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    className="text-black"
-                />
-                <button onClick={sendChatMessage}> Send </button>
-            </div>
-        </div>
     );
 });
 

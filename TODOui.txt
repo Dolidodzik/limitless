@@ -1,0 +1,5 @@
+fix the mobile version 
+add icons to mobile
+create popup  with QR
+fix the chat to look good(input size margins etc.)
+create transfer section without any colors in bg remove what is useless 
