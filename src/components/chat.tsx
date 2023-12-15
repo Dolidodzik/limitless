@@ -2,6 +2,7 @@ import { useState, forwardRef, useImperativeHandle, ForwardedRef, useEffect, use
 import { ChatMessage } from "../dataStructures/interfaces";
 import { sendSomeData } from "../utils/senderFunctions";
 import { AppGlobals } from "../globals/globals";
+import logo from '../img/send.png';
 
 interface ChatProps {
     myPeerId: string;
@@ -44,29 +45,30 @@ export const Chat = forwardRef(({
 
     // TODO - BLOCK USER IN UI FROM SENDING MESSAGES WHEN THERE ARE NO CONNECTIONS
     return (
-        <div className="">
-            <div className="">
+        
+            <div className="flex flex-col h-full">
                 <h2>Chat logs:</h2>
-                <div className="overflow-y-scroll p-4 h-full" id="style-1">
+                <div className="overflow-y-scroll p-4 flex-grow" id="style-1">
                     {chatLogs.map((message, index) => (
                         <div
                             key={index}
                             style={{ textAlign: message.peerId === myPeerId ? 'right' : 'left' }}
                         >
-                            <b>{index}. {message.peerId === myPeerId ? `${AppGlobals.ownNickname}` : `${AppGlobals.connections.map((connection) => (connection.peerNickname))}`}:</b> {message.message}
+                            <b>{message.peerId === myPeerId ? `${AppGlobals.ownNickname}` : `${AppGlobals.connections.map((connection) => (connection.peerNickname))}`}:</b> {message.message}
                         </div>
                     ))}
                 <div ref={scroll}/>
                 </div>
-            </div>
-            <div className="">
+            
+            <div className="mb-6 flex w-full justify-center h-14">
                 <input
                     type="text"
                     value={messageInput}
+                    placeholder="Message"
                     onChange={(e) => setMessageInput(e.target.value)}
-                    className="text-black"
+                    className="text-white bg-gray rounded-l-lg border-4 border-r-0 border-black/20 h-full w-4/6 text-lg pl-2 placeholder-white/50"
                 />
-                <button onClick={sendChatMessage}> Send </button>
+                <button onClick={sendChatMessage} className="bg-gray border-4 border-l-0 rounded-r-lg border-black/20 pl-2"> <img src={logo} className="h-1/2 pr-2"/></button>
             </div>
         </div>
     );

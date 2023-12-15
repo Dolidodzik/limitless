@@ -53,7 +53,7 @@ const App: React.FC = () => {
     <div className="xl:grid grid-cols-3 grid-rows-3 gap-4 flex flex-col h-[80vh] mx-8">
       {/* first grid with users in session*/}
       <div className="bg-tile rounded-md flex flex-col justify-between text-center shadow-md">
-        <p className="font-thin text-2xl p-4">Hi, {AppGlobals.ownNickname} </p> 
+        <p className="font-thin text-2xl p-4">Hi, {AppGlobals.ownNickname}</p>
         <div className="flex justify-evenly mb-4">
           <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm">QR icon</button>
           <p className="text-xl">or</p>
@@ -61,7 +61,7 @@ const App: React.FC = () => {
         </div>
       </div>
       {/* second grid with room */}
-      <div className="bg-tile rounded-md xl:order-first shadow-md">
+      <div className="bg-tile rounded-md xl:order-first shadow-md overflow-auto">
           <span className="text-2xl text-left">Your room</span>
           {AppGlobals.connections.map((connection) => (
             <div className="flex item-center">
