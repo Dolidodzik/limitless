@@ -20,7 +20,9 @@ body {
   border: 3px solid black;
 }
 
-
+.bg{
+  background-color: rgba(40,40,40,255);
+}
 
 .connections {
   background-color: #426644;

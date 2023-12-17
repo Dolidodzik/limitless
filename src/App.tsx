@@ -29,6 +29,10 @@ const App: React.FC = () => {
       chatRef.current.addMessageToChatLogs("deleted peer connection: " + peerId, "SYSTEM_MESSAGE")
     forceUpdate();
   }
+  //copy to clipboard peerId
+  const copy = async () => {
+    await navigator.clipboard.writeText("http://localhost:3000/"+myPeerId);
+  };
 
   const returnLink = () => {
     return "http://localhost:3000/"+myPeerId;
@@ -44,7 +48,7 @@ const App: React.FC = () => {
     })
   }
   console.log(myPeerId)
-  console.log(myPeerId)
+  console.log(qrDataURL)
 
   return (
     <div className="App bg-primary h-screen">
@@ -52,25 +56,28 @@ const App: React.FC = () => {
     
     <div className="xl:grid grid-cols-3 grid-rows-3 gap-4 flex flex-col h-[80vh] mx-8">
       {/* first grid with users in session*/}
-      <div className="bg-tile rounded-md flex flex-col justify-between text-center shadow-md">
-        <p className="font-thin text-2xl p-4">Hi, {AppGlobals.ownNickname}</p>
-        <div className="flex justify-evenly mb-4">
+      <div className="bg-tile rounded-md flex flex-col justify-evenly text-center shadow-md">
+        <p className="font-thin text-4xl p-4">Hi, {AppGlobals.ownNickname}</p>
+        <div className="flex justify-center space-x-5 mb-4">
           <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm">QR icon</button>
           <p className="text-xl">or</p>
-          <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm" >Copy ID</button>
+          <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm" onClick={copy}>Copy link</button>
         </div>
       </div>
       {/* second grid with room */}
       <div className="bg-tile rounded-md xl:order-first shadow-md overflow-auto">
-          <span className="text-2xl text-left">Your room</span>
-          {AppGlobals.connections.map((connection) => (
-            <div className="flex item-center">
-              <p className="font-thin text-xl">{connection.peerNickname}</p>
-              <input type="checkbox"/>
-            </div>
-          ))
-          }
-
+          <span className="text-3xl font-normal text-left m-2">Your room</span>
+          <div className="overflow-auto">
+            
+              {AppGlobals.connections.map((connection) => (
+                <div className="flex item-center justify-between mx-4">
+                  <p className="font-thin text-2xl">{connection.peerNickname}</p>
+                  <input type="checkbox" className="mr-12"/>
+                </div>
+              ))
+              }
+            
+          </div>
       </div>
       {/* third grid chat */}
       <div className="bg-tile shadow-md rounded-md opacity-0 xl:opacity-100 row-span-3">
@@ -78,8 +85,10 @@ const App: React.FC = () => {
       </div>
           
       {/* fourth grid connection */}
-      <div className="bg-tile shadow-md rounded-md opacity-0 xl:opacity-100 col-span-2 row-span-2">
-      <h1>Transfer</h1>
+      <div className="bg-tile shadow-md rounded-md opacity-0 xl:opacity-100 col-span-2 row-span-2 overflow-x-auto">
+        <div className="w-auto sticky top-0 bg">
+          <h1 className="text-3xl ml-2">Transfer</h1>
+        </div>
         {AppGlobals.connections.length > 0 ? (
           <div className="">
             <Connections chatRef={chatRef} disconnectFromSelectedClient={disconnectFromSelectedClient} />

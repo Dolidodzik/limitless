@@ -3,6 +3,7 @@ import { ChatMessage } from "../dataStructures/interfaces";
 import { sendSomeData } from "../utils/senderFunctions";
 import { AppGlobals } from "../globals/globals";
 import logo from '../img/send.png';
+import empty from '../img/empty.png';
 
 interface ChatProps {
     myPeerId: string;
@@ -46,18 +47,30 @@ export const Chat = forwardRef(({
     // TODO - BLOCK USER IN UI FROM SENDING MESSAGES WHEN THERE ARE NO CONNECTIONS
     return (
         
+           
+        
             <div className="flex flex-col h-full">
-                <h2>Chat logs:</h2>
-                <div className="overflow-y-scroll p-4 flex-grow" id="style-1">
-                    {chatLogs.map((message, index) => (
+                <div className="overflow-y-scroll p-4 flex-grow mx-6" id="style-1">
+                {chatLogs.length === 0 ? 
+                    <div className="flex flex-col text-center items-center">
+                        <img src={empty} className="w-1/2 "/>
+                        <div className="text-4xl">
+                            It's empty!
+                        </div>
+                        <div className="text-md font-thin">Start chatting with your roommates</div>
+                    </div>: chatLogs.map((message, index) => (
                         <div
                             key={index}
-                            style={{ textAlign: message.peerId === myPeerId ? 'right' : 'left' }}
+                            style={{textAlign:message.peerId === myPeerId ? 'right' : 'left'}}
+                            className="break-all"
                         >
-                            <b>{message.peerId === myPeerId ? `${AppGlobals.ownNickname}` : `${AppGlobals.connections.map((connection) => (connection.peerNickname))}`}:</b> {message.message}
+                            <b>{message.peerId === myPeerId ? `${AppGlobals.ownNickname}` : `${AppGlobals.connections.map((connection) => (connection.peerNickname))}`}:</b>
+                            <br/>
+                            {message.message}
                         </div>
                     ))}
-                <div ref={scroll}/>
+                    
+                    <div ref={scroll}/>
                 </div>
             
             <div className="mb-6 flex w-full justify-center h-14">
