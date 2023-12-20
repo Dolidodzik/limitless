@@ -70,9 +70,10 @@ const App: React.FC = () => {
           <div className="overflow-auto">
             
               {AppGlobals.connections.map((connection) => (
-                <div className="flex item-center justify-between mx-4">
-                  <p className="font-thin text-2xl">{connection.peerNickname}</p>
+                <div className="mx-4 checkbox-wrapper-13 ">
+                  <label className="font-thin text-2xl align-middle flex items-center justify-between">{connection.peerNickname}
                   <input type="checkbox" className="mr-12"/>
+                  </label>
                 </div>
               ))
               }
