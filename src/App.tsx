@@ -92,7 +92,7 @@ const App: React.FC = () => {
         </div>
         {AppGlobals.connections.length > 0 ? (
           <div className="">
-            <Connections chatRef={chatRef} disconnectFromSelectedClient={disconnectFromSelectedClient} />
+            {/* <Connections chatRef={chatRef} disconnectFromSelectedClient={disconnectFromSelectedClient} /> */}
             <FileTransfers myPeerId="cipa" chatRef={chatRef} disconnectFromSelectedClient={disconnectFromSelectedClient} />
           </div>
         ) : (

@@ -236,12 +236,13 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
               ))}
               <br/>
             </div>
+              
           ))}
 
         
           <br/>
 
-          <input type="file" multiple onChange={handleFileUpload} />
+          <input type="file" multiple onChange={handleFileUpload} className="shadow-lg bg" />
           <button onClick={handleFileSubmit}>SEND SELECTED FILE TO SELECTED PEERS!</button>
 
           {selectedFiles.length > 1 ? 
