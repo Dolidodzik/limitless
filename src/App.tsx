@@ -65,13 +65,13 @@ const App: React.FC = () => {
         </div>
       </div>
       {/* second grid with room */}
-      <div className="bg-tile rounded-md xl:order-first shadow-md overflow-auto">
-          <span className="text-3xl font-normal text-left m-2">Your room</span>
+      <div className="bg-tile rounded-md xl:order-first shadow-md overflow-auto h-64 xl:h-full">
+          <span className="text-2xl xl:text-3xl font-normal text-left m-2">Your room</span>
           <div className="overflow-auto">
             
               {AppGlobals.connections.map((connection) => (
                 <div className="mx-4 checkbox-wrapper-13 ">
-                  <label className="font-thin text-2xl align-middle flex items-center justify-between">{connection.peerNickname}
+                  <label className="font-thin xl:text-2xl text-xl align-middle flex items-center justify-between">{connection.peerNickname}
                   <input type="checkbox" className="mr-12"/>
                   </label>
                 </div>
@@ -81,14 +81,14 @@ const App: React.FC = () => {
           </div>
       </div>
       {/* third grid chat */}
-      <div className="bg-tile shadow-md rounded-md opacity-0 xl:opacity-100 row-span-3">
+      <div className="bg-tile shadow-md rounded-md hidden xl:flex row-span-3">
         <Chat myPeerId={myPeerId} ref={chatRef}/>
       </div>
           
       {/* fourth grid connection */}
-      <div className="bg-tile shadow-md rounded-md opacity-0 xl:opacity-100 col-span-2 row-span-2 overflow-x-auto">
+      <div className="bg-tile shadow-md rounded-md col-span-2 row-span-2 overflow-x-auto">
         <div className="w-auto sticky top-0 bg">
-          <h1 className="text-3xl ml-2">Transfer</h1>
+          <h1 className="text-3xl ml-2 mt-1">Transfers</h1>
         </div>
         {AppGlobals.connections.length > 0 ? (
           <div className="">

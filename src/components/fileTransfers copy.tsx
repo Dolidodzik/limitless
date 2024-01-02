@@ -9,7 +9,6 @@ import { userAccepts } from "../dataStructures/interfaces";
 import { ChatRef } from "./chat";
 import { sendSomeData, sendTransferPauseNotification } from "../utils/senderFunctions";
 import { dealWithTransferProgressUpdates, uploadProgressValues } from '../utils/utils';
-import file from '../img/word.png';
 
 let progressUpdateHandle: any;
  
@@ -156,7 +155,9 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     return (
         <div className="fileTransfers">
           <br/>
+
           <h1><i> !! TODO UI/UX !! There should be some interface that allows user choose who he wants to upload to in more user friendly way than this shit: </i></h1>
+
           {AppGlobals.connections.map((connection) => (
             <div key={connection.peerId}> * {connection.peerId} 
               <button onClick={() => props.disconnectFromSelectedClient(connection.peerId)}> disconnect </button> 
@@ -172,33 +173,12 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           ))}
 
 
-          
-          
-          <h3 className="text-xl m-2">Incoming: </h3>
+          <h2> File transfers: </h2>
+          <br/>
+          <h3>  Incoming: </h3>
           {AppGlobals.incomingFileTransfers.map((transfer) => (
-            <div key={transfer.id} className="bg-white/10 flex rounded-lg h-20 m-4"> 
-              {/* img */}
-              <div className="hidden xl:flex">
-                <img src={file} className="h-full p-2"/>
-              </div>
-              {/* desc */}
-              <div className="flex flex-col justify-evenly mx-4 font-semibold flex-grow w-1/2 xl:w-full truncate">
-                <p>{transfer.name}</p>
-                <p>{(transfer.size / 1024).toFixed(2)} KB</p>
-              </div>
-              {/* buttons */}
-              {transfer.receiverPeers[0].isAccepted ? (
-                <div className="flex mx-4 m-auto space-x-4">
-                  <button className="bg-red-600 p-2" onClick={() => deleteActiveIncomingTransfer(transfer.id)}>Reject</button>
-                </div>
-              )
-              :(
-              <div className="flex mx-4 m-auto space-x-4">
-                <button className="bg-green-600 p-2" onClick={() => acceptTransfer(transfer.id)}>Accept</button>
-                <button className="bg-red-600 p-2" onClick={() => deleteActiveIncomingTransfer(transfer.id)}>Reject</button>
-              </div>)
-              }
-              {/* * <b>{transfer.id}</b> from <b>{transfer.senderPeerID}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks.
+            <div key={transfer.id} className="box"> 
+              * <b>{transfer.id}</b> from <b>{transfer.senderPeerID}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks.
               <br/>
               {transfer.receiverPeers[0].isAccepted ? (
                 <span> 
@@ -224,36 +204,15 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                   ? <div> This transfer is paused </div>
                   : <div> This transfer is going now </div>
                 } </div>
-              } */}
-              
+              }
+
             </div>
           ))}
 
-          <h3 className="text-xl m-2">Outgoing: </h3>
+          <h3>  Outgoing: </h3>
           {AppGlobals.outgoingFileTransfers.map((transfer) => (
-             <div key={transfer.id} className="bg-white/10 flex rounded-lg h-20 m-4"> 
-              {/* img */}
-              <div className="hidden xl:flex">
-                <img src={file} className="h-full p-2"/>
-              </div>
-              {/* desc */}
-              <div className="flex flex-col justify-evenly mx-4 font-semibold flex-grow w-1/2 xl:w-full truncate">
-                <p>{transfer.name}</p>
-                <p>{(transfer.size / 1024).toFixed(2)} KB</p>
-              </div>
-              {/* buttons */}
-              {/* {transfer.receiverPeers[0].isAccepted ? (
-                <div className="flex mx-4 m-auto space-x-4">
-                  <button className="bg-red-600 p-2" >Reject</button>
-                </div>
-              )
-              :( */}
-              <div className="flex mx-4 m-auto space-x-4">
-                <button className="bg-sky-600 p-2" >Send</button>
-                <button className="bg-red-600 p-2" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}>Delete</button>
-              </div>
-              {/* } */}
-              {/* * <b>{transfer.id}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks. <br/> 
+            <div key={transfer.id} className="box"> 
+              * <b>{transfer.id}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks. <br/> 
               
               <button onClick={() => deleteActiveOutgoingTransfer(transfer.id)}> Delete this transfer </button> 
 
@@ -275,28 +234,22 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
 
                 </div>
               ))}
-              <br/> */}
-              </div>
-            
+              <br/>
+            </div>
               
           ))}
 
         
           <br/>
-          <div className="flex justify-center text-center">
-            <label className="cursor-pointer text-2xl shadow-2xl w-1/2 xl:w-1/4 py-4 ">
-              <input type="file" multiple onChange={handleFileUpload} className="shadow-lg file-input w-1/2" />
-              Add files
-            </label>
-          </div>
-          <br/>
+
+          <input type="file" multiple onChange={handleFileUpload} className="shadow-lg bg" />
           <button onClick={handleFileSubmit}>SEND SELECTED FILE TO SELECTED PEERS!</button>
 
-          {/* {selectedFiles.length > 1 ? 
+          {selectedFiles.length > 1 ? 
             <span> Selected multiple files. It will work, but it is advised to compress files into .zip before sending them using limitless. </span>
             : 
             <span> Keep in mind selecting multiple files may cause unforseeable stability issues. It's recommended to compress your shit into single .zip if you want to send multiple files. </span>
-          } */}
+          }
         </div>
     );
 };
