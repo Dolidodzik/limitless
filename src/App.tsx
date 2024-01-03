@@ -8,7 +8,9 @@ import { Connections } from "./components/connections";
 import { LoadingPeerJS } from "./components/loadingPeerJS";
 import { Link, Route, Routes } from 'react-router-dom'
 import QRCode from 'qrcode';
-import Mchat from './mobile-chat';
+import home from './img/home.png';
+import chat from './img/chat.png';
+
 
 
 
@@ -87,9 +89,9 @@ const App: React.FC = () => {
       </div>
           
       {/* fourth grid connection */}
-      <div className="bg-tile shadow-md rounded-md col-span-2 row-span-2 overflow-x-auto">
+      <div className="bg-tile shadow-md rounded-md col-span-2 row-span-2 h-full overflow-x-auto">
         <div className="w-auto sticky top-0 bg">
-          <h1 className="text-3xl ml-2 mt-1">Transfers</h1>
+          <h1 className="text-2xl xl:text-3xl ml-2 mt-1 font-normal">Transfers</h1>
         </div>
         {AppGlobals.connections.length > 0 ? (
           <div className="">
@@ -113,9 +115,9 @@ const App: React.FC = () => {
       </div>
       {/* footer for mobile */}
       
-      <div className="xl:opacity-0 sticky top-[100vh] h-12 w-full bg-black flex justify-around">
-        <Link to='/'>home</Link>
-        <Link to='/mchat'>chat</Link>
+      <div className="xl:opacity-0 sticky top-[100vh] h-12 w-full bg flex justify-around">
+        <Link to='/'><img src={home} className="h-3/4 mt-2"/></Link>
+        <Link to='/mchat'><img src={chat} className="h-3/4 mt-2"/></Link>
       </div>
     </div>
     
