@@ -14,10 +14,7 @@ const root = ReactDOM.createRoot(
 root.render(
   <BrowserRouter>
     <React.StrictMode>
-    <Routes>
-      <Route path="/mchat"  element={<Mchat/>}/>
-      <Route path="/"  element={<App/>}/>
-      </Routes>
+      <App/>
     </React.StrictMode>
   </BrowserRouter>
 );
