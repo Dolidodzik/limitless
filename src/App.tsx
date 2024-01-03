@@ -6,7 +6,9 @@ import { Chat, ChatRef } from "./components/chat";
 import { FileTransfers } from "./components/fileTransfers";
 import { Connections } from "./components/connections";
 import { LoadingPeerJS } from "./components/loadingPeerJS";
-import QRCode from 'qrcode'
+import { Link, Route, Routes } from 'react-router-dom'
+import QRCode from 'qrcode';
+import Mchat from './mobile-chat';
 
 
 
@@ -53,7 +55,6 @@ const App: React.FC = () => {
   return (
     <div className="App bg-primary h-screen">
       <h1 className="text-white text-center text-3xl py-4 ">limitless.</h1>
-    
     <div className="xl:grid grid-cols-3 grid-rows-3 gap-4 flex flex-col h-[80vh] mx-8">
       {/* first grid with users in session*/}
       <div className="bg-tile rounded-md flex flex-col justify-evenly text-center shadow-md">
@@ -111,9 +112,10 @@ const App: React.FC = () => {
       />
       </div>
       {/* footer for mobile */}
+      
       <div className="xl:opacity-0 sticky top-[100vh] h-12 w-full bg-black flex justify-around">
-        <p>icon</p>
-        <p>icon2</p>
+        <Link to='/'>home</Link>
+        <Link to='/mchat'>chat</Link>
       </div>
     </div>
     

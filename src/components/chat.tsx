@@ -49,8 +49,8 @@ export const Chat = forwardRef(({
         
            
         
-            <div className="flex flex-col h-full">
-                <div className="overflow-y-scroll p-4 flex-grow mx-6" id="style-1">
+            <div className="flex flex-col h-full w-full">
+                <div className="overflow-y-scroll p-4 flex-grow md:mx-6 mx-2" id="style-1">
                 {chatLogs.length === 0 ? 
                     <div className="flex flex-col text-center items-center">
                         <img src={empty} className="w-1/2 "/>
