@@ -33,6 +33,10 @@ export const LoadingPeerJS = (props: {
     
         newPeer.on("connection", (conn) => {
           conn.on("open", () => {
+
+            console.log("OEPNING NEW CONNECTION");
+            console.log(AppGlobals.connections)
+
             const newConnectionData: ConnectionData = {
               connection: conn,
               peerId: conn.peer,
