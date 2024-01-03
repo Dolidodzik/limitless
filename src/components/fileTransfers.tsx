@@ -15,10 +15,10 @@ let progressUpdateHandle: any;
  
 export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject<ChatRef | null>, disconnectFromSelectedClient: (peerId: string) => void}) => {
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-    // IDs of peers user chose to send file to
-    const [targetPeers, setTargetPeers] = useState<string[]>([]);
-
     const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
+
+    // workaround for  Type 'String[]' is not assignable to type 'string[]'. Type 'String' is not assignable to type 'string'.
+    const localTargetPeers: string[] = AppGlobals.targetPeers.map(String);
 
     useEffect(() => {
       progressUpdateHandle = setInterval(() => {
@@ -50,10 +50,10 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           // sending data only to selected peers
           let offer: any = JSON.parse(JSON.stringify(outgoingTransferOffer));
           offer.dataType = "FILE_TRANSFER_OFFER";
-          sendSomeData(offer, targetPeers);
+          sendSomeData(offer, localTargetPeers);
       
           // when connection is already sent, we edit it for this client only and assign correct peer ids
-          const connectedPeerIDs: userAccepts[] = targetPeers.map(targetPeerID => ({ id: targetPeerID, isAccepted: false, progress: null, last5updates: null, isAborted: false }));
+          const connectedPeerIDs: userAccepts[] = localTargetPeers.map(targetPeerID => ({ id: targetPeerID, isAccepted: false, progress: null, last5updates: null, isAborted: false }));
           
           outgoingTransferOffer.setPeerIDs(props.myPeerId, connectedPeerIDs);
           AppGlobals.outgoingFileTransfers.push(outgoingTransferOffer)
@@ -71,21 +71,6 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
         }
       
         setSelectedFiles(newFiles);
-    };
-
-    const switchTargetPeer = (peerId: string) => {
-        setTargetPeers((prevTargetPeers) => {
-          // Check if the peerId already exists in the list
-          const isPeerIdExists = prevTargetPeers.includes(peerId);
-      
-          if (isPeerIdExists) {
-            // If the peerId exists, remove it from the list
-            return prevTargetPeers.filter((id) => id !== peerId);
-          } else {
-            // If the peerId doesn't exist, add it to the list
-            return [...prevTargetPeers, peerId];
-          }
-        });
     };
 
     const acceptTransfer = (id: string) => {
@@ -160,14 +145,6 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           {AppGlobals.connections.map((connection) => (
             <div key={connection.peerId}> * {connection.peerId} 
               <button onClick={() => props.disconnectFromSelectedClient(connection.peerId)}> disconnect </button> 
-              <div> 
-                  {targetPeers.includes(connection.peerId) ? 
-                    <span> SELECTED FOR FILE UPLOAD TRUE. </span>
-                    : 
-                    <span> SELECTED FOR FILE UPLOAD FALSE. </span>
-                  }
-                  <button onClick={() => switchTargetPeer(connection.peerId)}> switch! </button>
-              </div>
             </div>
           ))}
 

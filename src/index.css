@@ -132,7 +132,6 @@ input:focus{
       cursor: pointer;
       margin-left: 4px;
     }
-
     .checkbox-wrapper-13 input[type=checkbox]:not(.switch) {
       border-radius: 7px;
     }

@@ -19,6 +19,31 @@ const App: React.FC = () => {
   const chatRef = useRef<ChatRef | null>(null);
   const [myPeerId, setMyPeerId] = useState("");
   const [qrDataURL, setQrDataURL] = useState("");
+  const [targetPeers, setTargetPeers] = useState<string[]>([]); // peers that are selected for transfering files
+
+  const handleCheckboxChange = (peerId: string) => {
+
+    console.log("HERE HANDLE CHECKBOX CHANGE")
+    console.log("state: ", targetPeers)
+    console.log("globals: ", AppGlobals.targetPeers)
+
+    // handling globals
+    const index = AppGlobals.targetPeers.indexOf(peerId);
+    if (index !== -1) {
+      console.log("REMOVIGN FROM GLOBALS")
+      AppGlobals.targetPeers.splice(index, 1);
+    } else {
+      console.log("ADDIN TO GLOBALS")
+      AppGlobals.targetPeers.push(peerId)
+    }
+
+    // handling state
+    if (targetPeers.includes(peerId)) {
+      setTargetPeers(targetPeers.filter((id) => id !== peerId));
+    } else {
+      setTargetPeers([...targetPeers, peerId]);
+    }
+  };
 
   const disconnectFromSelectedClient = (peerId: string) => {
     // closing connection with unwanted peer
@@ -51,8 +76,8 @@ const App: React.FC = () => {
       console.error(err)
     })
   }
-  console.log(myPeerId)
-  console.log(qrDataURL)
+  //console.log(myPeerId)
+  //console.log(qrDataURL)
 
   return (
     <div className="App bg-primary h-screen">
@@ -74,8 +99,14 @@ const App: React.FC = () => {
             
               {AppGlobals.connections.map((connection) => (
                 <div className="mx-4 checkbox-wrapper-13 ">
-                  <label className="font-thin xl:text-2xl text-xl align-middle flex items-center justify-between">{connection.peerNickname}
-                  <input type="checkbox" className="mr-12"/>
+                  <label className="font-thin xl:text-2xl text-xl align-middle flex items-center justify-between">
+                    {connection.peerNickname}
+                    <input
+                      type="checkbox"
+                      className="mr-12"
+                      checked={targetPeers.includes(connection.peerId)}
+                      onChange={() => handleCheckboxChange(connection.peerId)}
+                    />
                   </label>
                 </div>
               ))

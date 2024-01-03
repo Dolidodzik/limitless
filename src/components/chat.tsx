@@ -46,9 +46,6 @@ export const Chat = forwardRef(({
 
     // TODO - BLOCK USER IN UI FROM SENDING MESSAGES WHEN THERE ARE NO CONNECTIONS
     return (
-        
-           
-        
             <div className="flex flex-col h-full w-full">
                 <div className="overflow-y-scroll p-4 flex-grow md:mx-6 mx-2" id="style-1">
                 {chatLogs.length === 0 ? 
@@ -61,7 +58,10 @@ export const Chat = forwardRef(({
                     </div>: chatLogs.map((message, index) => (
                         <div
                             key={index}
-                            style={{textAlign:message.peerId === myPeerId ? 'right' : 'left'}}
+                            style={{
+                                backgroundColor: message.peerId === myPeerId ? 'blue' : 'gray',
+                                textAlign: message.peerId === myPeerId ? 'right' : 'left',
+                            }}
                             className="break-all"
                         >
                             <b>{message.peerId === myPeerId ? `${AppGlobals.ownNickname}` : `${AppGlobals.connections.map((connection) => (connection.peerNickname))}`}:</b>
