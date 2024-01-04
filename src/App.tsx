@@ -98,7 +98,7 @@ const App: React.FC = () => {
           <div className="overflow-auto">
             
               {AppGlobals.connections.map((connection) => (
-                <div className="mx-4 checkbox-wrapper-13 ">
+                <div className="mx-4 checkbox-wrapper-13" key={connection.peerId}>
                   <label className="font-thin xl:text-2xl text-xl align-middle flex items-center justify-between">
                     {connection.peerNickname}
                     <input
