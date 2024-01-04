@@ -4,13 +4,11 @@ import { AppGlobals } from './globals/globals';
 import { removeConnectionByID } from "./globals/globalFunctions";
 import { Chat, ChatRef } from "./components/chat";
 import { FileTransfers } from "./components/fileTransfers";
-import { Connections } from "./components/connections";
 import { LoadingPeerJS } from "./components/loadingPeerJS";
-import { Link, Route, Routes } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import QRCode from 'qrcode';
 import home from './img/home.png';
 import chat from './img/chat.png';
-
 
 
 
@@ -19,30 +17,15 @@ const App: React.FC = () => {
   const chatRef = useRef<ChatRef | null>(null);
   const [myPeerId, setMyPeerId] = useState("");
   const [qrDataURL, setQrDataURL] = useState("");
-  const [targetPeers, setTargetPeers] = useState<string[]>([]); // peers that are selected for transfering files
 
   const handleCheckboxChange = (peerId: string) => {
-
-    console.log("HERE HANDLE CHECKBOX CHANGE")
-    console.log("state: ", targetPeers)
-    console.log("globals: ", AppGlobals.targetPeers)
-
-    // handling globals
-    const index = AppGlobals.targetPeers.indexOf(peerId);
-    if (index !== -1) {
-      console.log("REMOVIGN FROM GLOBALS")
-      AppGlobals.targetPeers.splice(index, 1);
+    const connectionIndex = AppGlobals.connections.findIndex((conn) => conn.peerId === peerId);
+    if (connectionIndex !== -1) {
+      AppGlobals.connections[connectionIndex].isSelectedForFileTransfer = !AppGlobals.connections[connectionIndex].isSelectedForFileTransfer;
     } else {
-      console.log("ADDIN TO GLOBALS")
-      AppGlobals.targetPeers.push(peerId)
+      console.error(`Connection with peerId ${peerId} not found`);
     }
-
-    // handling state
-    if (targetPeers.includes(peerId)) {
-      setTargetPeers(targetPeers.filter((id) => id !== peerId));
-    } else {
-      setTargetPeers([...targetPeers, peerId]);
-    }
+    forceUpdate();
   };
 
   const disconnectFromSelectedClient = (peerId: string) => {
@@ -104,7 +87,7 @@ const App: React.FC = () => {
                     <input
                       type="checkbox"
                       className="mr-12"
-                      checked={targetPeers.includes(connection.peerId)}
+                      checked={connection.isSelectedForFileTransfer}
                       onChange={() => handleCheckboxChange(connection.peerId)}
                     />
                   </label>

@@ -9,5 +9,4 @@ export namespace AppGlobals {
     export const incomingFileTransfers: FileTransfer[] = [];
     export const connections: ConnectionData[] = [];
     export const ownNickname: string = generateRandomNickname();
-    export const targetPeers: string[] = [];
 }

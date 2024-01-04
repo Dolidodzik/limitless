@@ -40,7 +40,8 @@ export const LoadingPeerJS = (props: {
             const newConnectionData: ConnectionData = {
               connection: conn,
               peerId: conn.peer,
-              peerNickname: null
+              peerNickname: null,
+              isSelectedForFileTransfer: true
             };
             AppGlobals.connections.push(newConnectionData);
     
@@ -107,7 +108,8 @@ export const LoadingPeerJS = (props: {
             const newConnectionData: ConnectionData = {
               connection: conn,
               peerId: conn.peer,
-              peerNickname: null
+              peerNickname: null,
+              isSelectedForFileTransfer: true
             };
 
             AppGlobals.connections.push(newConnectionData)

@@ -16,8 +16,9 @@ let progressUpdateHandle: any;
 export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject<ChatRef | null>, disconnectFromSelectedClient: (peerId: string) => void}) => {
     const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 
-    // workaround for  Type 'String[]' is not assignable to type 'string[]'. Type 'String' is not assignable to type 'string'.
-    const localTargetPeers: string[] = AppGlobals.targetPeers.map(String);
+
+    const localTargetPeers: string[] = AppGlobals.connections.filter((conn) => conn.isSelectedForFileTransfer).map((conn) => conn.peerId);
+    console.log("APP GLOBALS: ", AppGlobals)
 
     useEffect(() => {
       progressUpdateHandle = setInterval(() => {
@@ -30,9 +31,13 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
       };
     }, []);
 
-
-
     const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
+
+        if(localTargetPeers.length === 0){
+          alert("You have to select to who you will be transfering your files, before selecting them!")
+          return;
+        }
+
         const newFiles = Array.from(event.target.files || []);
 
         console.log("New file(s) selected, creating transfer offers: ", newFiles)
@@ -73,7 +78,6 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
         console.log("sending transfer offer: ", transfer, "sex", peerUserAccepts)
         sendSomeData(finalOffer, peerUserAccepts.id)
       });
-
     }
 
     const acceptTransfer = (id: string) => {
