@@ -49,7 +49,7 @@ export const Chat = forwardRef(({
         
            
         
-            <div className="flex flex-col h-full w-full">
+            <div className="flex flex-col h-full w-full mx-8 xl:mx-0">
                 <div className="overflow-y-scroll p-4 flex-grow md:mx-6 mx-2" id="style-1">
                 {chatLogs.length === 0 ? 
                     <div className="flex flex-col text-center items-center">
@@ -73,7 +73,7 @@ export const Chat = forwardRef(({
                     <div ref={scroll}/>
                 </div>
             
-            <div className="mb-6 flex w-full justify-center h-14">
+            <div className="mb-6 flex justify-center h-14">
                 <input
                     type="text"
                     value={messageInput}

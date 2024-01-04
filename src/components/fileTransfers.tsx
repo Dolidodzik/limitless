@@ -266,7 +266,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
 
                   {receiver.isAborted       
                     ? <div> This transfer was aborted by receiver  </div>
-                    : <div> {transfer.isPaused       
+                    : <div> {transfer.isPaused 
                       ? <div> This transfer is paused <button onClick={() => {resumeOutgoingTransfer(transfer.id)}}> RESUME UPLOAD </button> </div>
                       : <div> This transfer is going now <button onClick={() => {pauseOutgoingTransfer(transfer.id)}}> PAUSE UPLOAD </button> </div>
                     } </div>
