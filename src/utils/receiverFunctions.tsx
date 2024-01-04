@@ -13,6 +13,7 @@ export function receiveFileTransferFileAccept(
     const fileToUpdate = AppGlobals.outgoingFileTransfers[fileIndex];
     const updatedFile = { ...fileToUpdate };
 
+    console.log(updatedFile)
     // Edit the properties of the copied object
     const i = updatedFile.receiverPeers.findIndex((user) => user.id === senderPeerId);
     updatedFile.receiverPeers[i].isAccepted = true;
@@ -23,7 +24,8 @@ export function receiveFileTransferFileAccept(
     // chunks go wrrrrrrrr (actual file transfer starts)
     const connectionData = AppGlobals.connections.find((connectionData) => connectionData.peerId === senderPeerId);
 
-    if(updatedFile.selectedFile && connectionData){        AppGlobals.outgoingFileTransfers[fileIndex].progress = 0;
+    if(updatedFile.selectedFile && connectionData){        
+        AppGlobals.outgoingFileTransfers[fileIndex].progress = 0;
         sendChunksData(updatedFile.selectedFile, connectionData, updatedFile.id)
         forceUpdate()
     }else{

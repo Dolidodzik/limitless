@@ -52,42 +52,28 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
             file.type,
             file
           )
-      
-          // when connection is already sent, we edit it for this client only and assign correct peer ids
+
           const connectedPeerIDs: userAccepts[] = localTargetPeers.map(targetPeerID => ({ id: targetPeerID, isAccepted: false, progress: null, last5updates: null, isAborted: false }));
           
           outgoingTransfer.setPeerIDs(props.myPeerId, connectedPeerIDs);
           AppGlobals.outgoingFileTransfers.push(outgoingTransfer)
+          console.log("after selecting files new outgoing transfer should be present in app globals outgoing transfers: ", AppGlobals.outgoingFileTransfers)
           forceUpdate();
         });
     };
 
-    const sendTransferOffer = (transferID: string) => {
+    const sendTransferOffer = (transfer: FileTransfer) => {
 
-      const filesWithGivenID = AppGlobals.outgoingFileTransfers.filter((fileTransfer) => fileTransfer.id === transferID);
-      console.log(filesWithGivenID)
-      if(filesWithGivenID && filesWithGivenID[0]){
-        let outgoingTransfer = filesWithGivenID[0];
+      let finalOffer: any = JSON.parse(JSON.stringify(transfer));
+      finalOffer.dataType = "FILE_TRANSFER_OFFER";
+      // censoring data about other peers
+      finalOffer.receiverPeers = "EMPTY"
+      
+      transfer.receiverPeers.forEach((peerUserAccepts) => {
+        console.log("sending transfer offer: ", transfer, "sex", peerUserAccepts)
+        sendSomeData(finalOffer, peerUserAccepts.id)
+      });
 
-        let offer = new FileTransfer(
-          outgoingTransfer.name,
-          outgoingTransfer.size,
-          calculateTotalChunks(outgoingTransfer.size, AppConfig.chunkSize),
-          generateRandomString(32),
-          outgoingTransfer.type,
-        )
-
-        let finalOffer: any = JSON.parse(JSON.stringify(offer));
-        finalOffer.dataType = "FILE_TRANSFER_OFFER";
-        
-        outgoingTransfer.receiverPeers.forEach((peerUserAccepts) => {
-          console.log("sending transfer offer: ", offer, "sex", peerUserAccepts)
-          sendSomeData(finalOffer, peerUserAccepts.id)
-        });
-
-      }else{
-        console.error("For some reason sendTransferOffer was called with ID that is nonexistent for any transfer")
-      }
     }
 
     const acceptTransfer = (id: string) => {
@@ -230,7 +216,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
               {/* buttons */}
 
               <div className="flex mx-4 m-auto space-x-4">
-                <button className="bg-sky-600 p-2" onClick={() => {sendTransferOffer(transfer.id)}}>Send</button>
+                <button className="bg-sky-600 p-2" onClick={() => {sendTransferOffer(transfer)}}>Send</button>
                 <button className="bg-red-600 p-2" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}>Delete</button>
               </div>
 
