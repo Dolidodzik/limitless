@@ -172,7 +172,15 @@ export function handleReceivedData (
         AppGlobals.incomingFileTransfers[index].isAborted = true;
     } else if(data.dataType === "RECEIVER_CANCELLED_TRANSFER"){
       const transferIndex = AppGlobals.outgoingFileTransfers.findIndex(fileInfo => fileInfo.id === data.transferID);
+
+      if(transferIndex === -1)
+        return
+
       const receiverPeerIndex = AppGlobals.outgoingFileTransfers[transferIndex].receiverPeers.findIndex(receiverPeer => receiverPeer.id === senderPeerId);
+      
+      if(receiverPeerIndex === -1)
+        return
+      
       AppGlobals.outgoingFileTransfers[transferIndex].receiverPeers[receiverPeerIndex].isAborted = true;
       forceUpdate();
     } else if(data.dataType === "NICKNAME_MANIFEST"){ // other peer is letting know about his username
