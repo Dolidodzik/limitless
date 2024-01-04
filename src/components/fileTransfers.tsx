@@ -14,7 +14,6 @@ import { dealWithTransferProgressUpdates, uploadProgressValues } from '../utils/
 let progressUpdateHandle: any;
  
 export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject<ChatRef | null>, disconnectFromSelectedClient: (peerId: string) => void}) => {
-    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 
     // workaround for  Type 'String[]' is not assignable to type 'string[]'. Type 'String' is not assignable to type 'string'.
@@ -31,14 +30,21 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
       };
     }, []);
 
-    const handleFileSubmit = () => {
-        if (selectedFiles.length === 0){
-          alert("NO FILE SELECTED PLEASE SELECT FILE");
-          return;
-        } 
+
+
+    const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
+        const newFiles = Array.from(event.target.files || []);
+
+        console.log("New file(s) selected, creating transfer offers: ", newFiles)
+
+        if (newFiles.length === 0) {
+          console.warn("WARNING! No files selected.");
+        } else if (newFiles.length > 1) {
+          console.warn("WARNING! Selecting multiple files. All selections will be kept.");
+        }
     
-        selectedFiles.forEach((file) => {
-          let outgoingTransferOffer = new FileTransfer(
+        newFiles.forEach((file) => {
+          let outgoingTransfer = new FileTransfer(
             file.name,
             file.size,
             calculateTotalChunks(file.size, AppConfig.chunkSize),
@@ -46,32 +52,43 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
             file.type,
             file
           )
-          
-          // sending data only to selected peers
-          let offer: any = JSON.parse(JSON.stringify(outgoingTransferOffer));
-          offer.dataType = "FILE_TRANSFER_OFFER";
-          sendSomeData(offer, localTargetPeers);
       
           // when connection is already sent, we edit it for this client only and assign correct peer ids
           const connectedPeerIDs: userAccepts[] = localTargetPeers.map(targetPeerID => ({ id: targetPeerID, isAccepted: false, progress: null, last5updates: null, isAborted: false }));
           
-          outgoingTransferOffer.setPeerIDs(props.myPeerId, connectedPeerIDs);
-          AppGlobals.outgoingFileTransfers.push(outgoingTransferOffer)
+          outgoingTransfer.setPeerIDs(props.myPeerId, connectedPeerIDs);
+          AppGlobals.outgoingFileTransfers.push(outgoingTransfer)
           forceUpdate();
         });
-    }
-
-    const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
-        const newFiles = Array.from(event.target.files || []);
-    
-        if (newFiles.length === 0) {
-          console.warn("WARNING! No files selected.");
-        } else if (newFiles.length > 1) {
-          console.warn("WARNING! Selecting multiple files. All selections will be kept.");
-        }
-      
-        setSelectedFiles(newFiles);
     };
+
+    const sendTransferOffer = (transferID: string) => {
+
+      const filesWithGivenID = AppGlobals.outgoingFileTransfers.filter((fileTransfer) => fileTransfer.id === transferID);
+      console.log(filesWithGivenID)
+      if(filesWithGivenID && filesWithGivenID[0]){
+        let outgoingTransfer = filesWithGivenID[0];
+
+        let offer = new FileTransfer(
+          outgoingTransfer.name,
+          outgoingTransfer.size,
+          calculateTotalChunks(outgoingTransfer.size, AppConfig.chunkSize),
+          generateRandomString(32),
+          outgoingTransfer.type,
+        )
+
+        let finalOffer: any = JSON.parse(JSON.stringify(offer));
+        finalOffer.dataType = "FILE_TRANSFER_OFFER";
+        
+        outgoingTransfer.receiverPeers.forEach((peerUserAccepts) => {
+          console.log("sending transfer offer: ", offer, "sex", peerUserAccepts)
+          sendSomeData(finalOffer, peerUserAccepts.id)
+        });
+
+      }else{
+        console.error("For some reason sendTransferOffer was called with ID that is nonexistent for any transfer")
+      }
+    }
 
     const acceptTransfer = (id: string) => {
         const fileIndex = AppGlobals.incomingFileTransfers.findIndex(file => file.id === id);
@@ -213,7 +230,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
               {/* buttons */}
 
               <div className="flex mx-4 m-auto space-x-4">
-                <button className="bg-sky-600 p-2" >Send</button>
+                <button className="bg-sky-600 p-2" onClick={() => {sendTransferOffer(transfer.id)}}>Send</button>
                 <button className="bg-red-600 p-2" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}>Delete</button>
               </div>
 
@@ -250,13 +267,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
             </label>
           </div>
           <br/>
-          <button onClick={handleFileSubmit}>SEND SELECTED FILE TO SELECTED PEERS!</button>
 
-          {selectedFiles.length > 1 ? 
-            <span> Selected multiple files. It will work, but it is advised to compress files into .zip before sending them using limitless. </span>
-            : 
-            <span>  </span>
-          } 
         </div>
     );
 };
