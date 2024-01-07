@@ -14,6 +14,7 @@ export interface ConnectionData {
   connection: DataConnection;
   peerId: string;
   peerNickname: string | null;
+  isSelectedForFileTransfer: boolean;
 }
 
 export interface nicknameManifest{

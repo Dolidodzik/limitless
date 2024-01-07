@@ -13,12 +13,7 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <BrowserRouter>
-    <React.StrictMode>
-    <Routes>
-      <Route path="/mchat"  element={<Mchat/>}/>
-      <Route path="/"  element={<App/>}/>
-      </Routes>
-    </React.StrictMode>
+    <App/>
   </BrowserRouter>
 );
 

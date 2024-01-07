@@ -33,10 +33,15 @@ export const LoadingPeerJS = (props: {
     
         newPeer.on("connection", (conn) => {
           conn.on("open", () => {
+
+            console.log("OEPNING NEW CONNECTION");
+            console.log(AppGlobals.connections)
+
             const newConnectionData: ConnectionData = {
               connection: conn,
               peerId: conn.peer,
-              peerNickname: null
+              peerNickname: null,
+              isSelectedForFileTransfer: true
             };
             AppGlobals.connections.push(newConnectionData);
     
@@ -103,7 +108,8 @@ export const LoadingPeerJS = (props: {
             const newConnectionData: ConnectionData = {
               connection: conn,
               peerId: conn.peer,
-              peerNickname: null
+              peerNickname: null,
+              isSelectedForFileTransfer: true
             };
 
             AppGlobals.connections.push(newConnectionData)

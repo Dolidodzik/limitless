@@ -4,13 +4,11 @@ import { AppGlobals } from './globals/globals';
 import { removeConnectionByID } from "./globals/globalFunctions";
 import { Chat, ChatRef } from "./components/chat";
 import { FileTransfers } from "./components/fileTransfers";
-import { Connections } from "./components/connections";
 import { LoadingPeerJS } from "./components/loadingPeerJS";
-import { Link, Route, Routes } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import QRCode from 'qrcode';
 import home from './img/home.png';
 import chat from './img/chat.png';
-
 
 
 
@@ -19,6 +17,16 @@ const App: React.FC = () => {
   const chatRef = useRef<ChatRef | null>(null);
   const [myPeerId, setMyPeerId] = useState("");
   const [qrDataURL, setQrDataURL] = useState("");
+
+  const handleCheckboxChange = (peerId: string) => {
+    const connectionIndex = AppGlobals.connections.findIndex((conn) => conn.peerId === peerId);
+    if (connectionIndex !== -1) {
+      AppGlobals.connections[connectionIndex].isSelectedForFileTransfer = !AppGlobals.connections[connectionIndex].isSelectedForFileTransfer;
+    } else {
+      console.error(`Connection with peerId ${peerId} not found`);
+    }
+    forceUpdate();
+  };
 
   const disconnectFromSelectedClient = (peerId: string) => {
     // closing connection with unwanted peer
@@ -51,8 +59,8 @@ const App: React.FC = () => {
       console.error(err)
     })
   }
-  console.log(myPeerId)
-  console.log(qrDataURL)
+  //console.log(myPeerId)
+  //console.log(qrDataURL)
 
   return (
     <div className="App bg-primary h-screen">
@@ -73,9 +81,15 @@ const App: React.FC = () => {
           <div className="overflow-auto">
             
               {AppGlobals.connections.map((connection) => (
-                <div className="mx-4 checkbox-wrapper-13 ">
-                  <label className="font-thin xl:text-2xl text-xl align-middle flex items-center justify-between">{connection.peerNickname}
-                  <input type="checkbox" className="mr-12"/>
+                <div className="mx-4 checkbox-wrapper-13" key={connection.peerId}>
+                  <label className="font-thin xl:text-2xl text-xl align-middle flex items-center justify-between">
+                    {connection.peerNickname}
+                    <input
+                      type="checkbox"
+                      className="mr-12"
+                      checked={connection.isSelectedForFileTransfer}
+                      onChange={() => handleCheckboxChange(connection.peerId)}
+                    />
                   </label>
                 </div>
               ))

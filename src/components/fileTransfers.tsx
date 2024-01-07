@@ -9,16 +9,16 @@ import { userAccepts } from "../dataStructures/interfaces";
 import { ChatRef } from "./chat";
 import { sendSomeData, sendTransferPauseNotification } from "../utils/senderFunctions";
 import { dealWithTransferProgressUpdates, uploadProgressValues } from '../utils/utils';
-import file from '../img/word.png';
+
 
 let progressUpdateHandle: any;
  
 export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject<ChatRef | null>, disconnectFromSelectedClient: (peerId: string) => void}) => {
-    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-    // IDs of peers user chose to send file to
-    const [targetPeers, setTargetPeers] = useState<string[]>([]);
-
     const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
+
+
+    const localTargetPeers: string[] = AppGlobals.connections.filter((conn) => conn.isSelectedForFileTransfer).map((conn) => conn.peerId);
+    console.log("APP GLOBALS: ", AppGlobals)
 
     useEffect(() => {
       progressUpdateHandle = setInterval(() => {
@@ -31,14 +31,25 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
       };
     }, []);
 
-    const handleFileSubmit = () => {
-        if (selectedFiles.length === 0){
-          alert("NO FILE SELECTED PLEASE SELECT FILE");
+    const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
+
+        if(localTargetPeers.length === 0){
+          alert("You have to select to who you will be transfering your files, before selecting them!")
           return;
-        } 
+        }
+
+        const newFiles = Array.from(event.target.files || []);
+
+        console.log("New file(s) selected, creating transfer offers: ", newFiles)
+
+        if (newFiles.length === 0) {
+          console.warn("WARNING! No files selected.");
+        } else if (newFiles.length > 1) {
+          console.warn("WARNING! Selecting multiple files. All selections will be kept.");
+        }
     
-        selectedFiles.forEach((file) => {
-          let outgoingTransferOffer = new FileTransfer(
+        newFiles.forEach((file) => {
+          let outgoingTransfer = new FileTransfer(
             file.name,
             file.size,
             calculateTotalChunks(file.size, AppConfig.chunkSize),
@@ -46,47 +57,28 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
             file.type,
             file
           )
+
+          const connectedPeerIDs: userAccepts[] = localTargetPeers.map(targetPeerID => ({ id: targetPeerID, isAccepted: false, progress: null, last5updates: null, isAborted: false }));
           
-          // sending data only to selected peers
-          let offer: any = JSON.parse(JSON.stringify(outgoingTransferOffer));
-          offer.dataType = "FILE_TRANSFER_OFFER";
-          sendSomeData(offer, targetPeers);
-      
-          // when connection is already sent, we edit it for this client only and assign correct peer ids
-          const connectedPeerIDs: userAccepts[] = targetPeers.map(targetPeerID => ({ id: targetPeerID, isAccepted: false, progress: null, last5updates: null, isAborted: false }));
-          
-          outgoingTransferOffer.setPeerIDs(props.myPeerId, connectedPeerIDs);
-          AppGlobals.outgoingFileTransfers.push(outgoingTransferOffer)
+          outgoingTransfer.setPeerIDs(props.myPeerId, connectedPeerIDs);
+          AppGlobals.outgoingFileTransfers.push(outgoingTransfer)
+          console.log("after selecting files new outgoing transfer should be present in app globals outgoing transfers: ", AppGlobals.outgoingFileTransfers)
           forceUpdate();
         });
+    };
+
+    const sendTransferOffer = (transfer: FileTransfer) => {
+
+      let finalOffer: any = JSON.parse(JSON.stringify(transfer));
+      finalOffer.dataType = "FILE_TRANSFER_OFFER";
+      // censoring data about other peers
+      finalOffer.receiverPeers = "EMPTY"
+      
+      transfer.receiverPeers.forEach((peerUserAccepts) => {
+        console.log("sending transfer offer: ", transfer, "sex", peerUserAccepts)
+        sendSomeData(finalOffer, peerUserAccepts.id)
+      });
     }
-
-    const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
-        const newFiles = Array.from(event.target.files || []);
-    
-        if (newFiles.length === 0) {
-          console.warn("WARNING! No files selected.");
-        } else if (newFiles.length > 1) {
-          console.warn("WARNING! Selecting multiple files. All selections will be kept.");
-        }
-      
-        setSelectedFiles(newFiles);
-    };
-
-    const switchTargetPeer = (peerId: string) => {
-        setTargetPeers((prevTargetPeers) => {
-          // Check if the peerId already exists in the list
-          const isPeerIdExists = prevTargetPeers.includes(peerId);
-      
-          if (isPeerIdExists) {
-            // If the peerId exists, remove it from the list
-            return prevTargetPeers.filter((id) => id !== peerId);
-          } else {
-            // If the peerId doesn't exist, add it to the list
-            return [...prevTargetPeers, peerId];
-          }
-        });
-    };
 
     const acceptTransfer = (id: string) => {
         const fileIndex = AppGlobals.incomingFileTransfers.findIndex(file => file.id === id);
@@ -160,14 +152,6 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           {AppGlobals.connections.map((connection) => (
             <div key={connection.peerId}> * {connection.peerId} 
               <button onClick={() => props.disconnectFromSelectedClient(connection.peerId)}> disconnect </button> 
-              <div> 
-                  {targetPeers.includes(connection.peerId) ? 
-                    <span> SELECTED FOR FILE UPLOAD TRUE. </span>
-                    : 
-                    <span> SELECTED FOR FILE UPLOAD FALSE. </span>
-                  }
-                  <button onClick={() => switchTargetPeer(connection.peerId)}> switch! </button>
-              </div>
             </div>
           ))}
 
@@ -177,10 +161,6 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           <h3 className="text-xl m-2">Incoming: </h3>
           {AppGlobals.incomingFileTransfers.map((transfer) => (
             <div key={transfer.id} className="bg-white/10 flex rounded-lg h-20 m-4"> 
-              {/* img */}
-              <div className="hidden xl:flex">
-                <img src={file} className="h-full p-2"/>
-              </div>
               {/* desc */}
               <div className="flex flex-col justify-evenly mx-4 font-semibold flex-grow w-1/2 xl:w-full truncate">
                 <p>{transfer.name}</p>
@@ -198,7 +178,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                 <button className="bg-red-600 p-2" onClick={() => deleteActiveIncomingTransfer(transfer.id)}>Reject</button>
               </div>)
               }
-              {/* * <b>{transfer.id}</b> from <b>{transfer.senderPeerID}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks.
+
               <br/>
               {transfer.receiverPeers[0].isAccepted ? (
                 <span> 
@@ -215,7 +195,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                   }
                 </span>
               ) : (
-                <span> You didn't accept this transfer. <button onClick={() => acceptTransfer(transfer.id)}> accept </button> </span>
+                <span> You didn't accept this transfer. </span>
               )}
               <br/>
               {transfer.isAborted   
@@ -224,7 +204,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                   ? <div> This transfer is paused </div>
                   : <div> This transfer is going now </div>
                 } </div>
-              } */}
+              }
               
             </div>
           ))}
@@ -232,30 +212,17 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           <h3 className="text-xl m-2">Outgoing: </h3>
           {AppGlobals.outgoingFileTransfers.map((transfer) => (
              <div key={transfer.id} className="bg-white/10 flex rounded-lg h-20 m-4"> 
-              {/* img */}
-              <div className="hidden xl:flex">
-                <img src={file} className="h-full p-2"/>
-              </div>
               {/* desc */}
               <div className="flex flex-col justify-evenly mx-4 font-semibold flex-grow w-1/2 xl:w-full truncate">
                 <p>{transfer.name}</p>
                 <p>{(transfer.size / 1024).toFixed(2)} KB</p>
               </div>
               {/* buttons */}
-              {/* {transfer.receiverPeers[0].isAccepted ? (
-                <div className="flex mx-4 m-auto space-x-4">
-                  <button className="bg-red-600 p-2" >Reject</button>
-                </div>
-              )
-              :( */}
+
               <div className="flex mx-4 m-auto space-x-4">
-                <button className="bg-sky-600 p-2" >Send</button>
+                <button className="bg-sky-600 p-2" onClick={() => {sendTransferOffer(transfer)}}>Send</button>
                 <button className="bg-red-600 p-2" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}>Delete</button>
               </div>
-              {/* } */}
-              {/* * <b>{transfer.id}</b> for file <b>{transfer.name} {transfer.size}</b>, with type <b>{transfer.type}</b>, consisting of <b>{transfer.totalChunks}</b> chunks. <br/> 
-              
-              <button onClick={() => deleteActiveOutgoingTransfer(transfer.id)}> Delete this transfer </button> 
 
               To peers:
               {transfer.receiverPeers.map((receiver) => (
@@ -275,7 +242,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
 
                 </div>
               ))}
-              <br/> */}
+              <br/> *
               </div>
             
               
@@ -290,13 +257,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
             </label>
           </div>
           <br/>
-          <button onClick={handleFileSubmit}>SEND SELECTED FILE TO SELECTED PEERS!</button>
 
-          {/* {selectedFiles.length > 1 ? 
-            <span> Selected multiple files. It will work, but it is advised to compress files into .zip before sending them using limitless. </span>
-            : 
-            <span> Keep in mind selecting multiple files may cause unforseeable stability issues. It's recommended to compress your shit into single .zip if you want to send multiple files. </span>
-          } */}
         </div>
     );
 };

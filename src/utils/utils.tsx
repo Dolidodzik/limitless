@@ -107,6 +107,37 @@ export function uploadProgressValues(transfer: FileTransfer, receiverId: string 
   }
 }
 
+export function removeDuplicateConnections(){
+  console.log("appglobals connections: ", AppGlobals.connections)
+
+  const previouslyPresentPeerIDs: string[] = [];
+  AppGlobals.connections.forEach((connection) => {
+    let index = previouslyPresentPeerIDs.indexOf(connection.connection.peer)
+
+    if(index !== -1){
+      AppGlobals.connections[index].connection.close();
+      console.log("REMOVING SHIT")
+      console.log("REMOVING SHIT")
+      console.log("REMOVING SHIT")
+      console.log("REMOVING SHIT")
+      console.log("REMOVING SHIT")
+      console.log("REMOVING SHIT")
+      console.log("REMOVING SHIT")
+      console.log("REMOVING SHIT")
+      console.log("REMOVING SHIT")
+      console.log("REMOVING SHIT")
+      console.log("REMOVING SHIT")
+      console.log("REMOVING SHIT")
+      console.log("REMOVING SHIT")
+      console.log("REMOVING SHIT")
+      console.log(connection.connection.peer)
+      AppGlobals.connections.splice(index, 1)
+    }else{
+      previouslyPresentPeerIDs.push(connection.connection.peer)
+    }
+  });
+}
+
 // should be called every 500ms. This function loops over every transfer, and checks how progress is going
 export function dealWithTransferProgressUpdates(forceUpdate: () => void){
   AppGlobals.incomingFileTransfers.forEach((fileTransfer) => {

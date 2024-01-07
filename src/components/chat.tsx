@@ -61,12 +61,20 @@ export const Chat = forwardRef(({
                     </div>: chatLogs.map((message, index) => (
                         <div
                             key={index}
-                            style={{textAlign:message.peerId === myPeerId ? 'right' : 'left'}}
-                            className="break-all"
-                        >
-                            <b>{message.peerId === myPeerId ? `${AppGlobals.ownNickname}` : `${AppGlobals.connections.map((connection) => (connection.peerNickname))}`}:</b>
-                            <br/>
-                            {message.message}
+                            style={{
+                                justifyContent: message.peerId === myPeerId ? 'right' : 'left',
+                            }}
+                            className="break-all flex mb-2"
+                        >   
+                            <div className={`flex-col flex ${message.peerId === myPeerId ? 'items-end' : 'items-start'}`}>
+                                <p className="font-thin text-sm" style={{color:'#91969d'}}>{message.peerId === myPeerId ? `${AppGlobals.ownNickname}` : `${AppGlobals.connections.map((connection) => (connection.peerNickname))}`}</p>
+                                <div
+                                style={{
+                                    backgroundColor: message.peerId === myPeerId ? '#00b4fd' : '#303030',
+                                }}
+                                className={`rounded-md p-2 w-fit ${message.peerId === myPeerId ? 'text-right' : 'text-left'}`}
+                                >{message.message}</div>
+                            </div>
                         </div>
                     ))}
                     
