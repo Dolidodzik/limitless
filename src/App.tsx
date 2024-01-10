@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const chatRef = useRef<ChatRef | null>(null);
   const [myPeerId, setMyPeerId] = useState("");
   const [qrDataURL, setQrDataURL] = useState("");
+  const [size, setSize] = useState("main");
 
   const handleCheckboxChange = (peerId: string) => {
     const connectionIndex = AppGlobals.connections.findIndex((conn) => conn.peerId === peerId);
@@ -64,7 +65,7 @@ const App: React.FC = () => {
 
   return (
     <div className="App bg-primary h-screen">
-      <h1 className="text-white text-center text-3xl py-4 ">limitless.</h1>
+   {size == 'main' ? <>   <h1 className="text-white text-center text-3xl py-4 ">limitless.</h1>
     <div className="xl:grid grid-cols-3 grid-rows-3 gap-4 flex flex-col h-[80vh] mx-8">
       {/* first grid with users in session*/}
       <div className="bg-tile rounded-md flex flex-col justify-evenly text-center shadow-md">
@@ -130,9 +131,25 @@ const App: React.FC = () => {
       {/* footer for mobile */}
       
       <div className="xl:opacity-0 sticky top-[100vh] h-12 w-full bg flex justify-around">
-        <Link to='/'><img src={home} className="h-3/4 mt-2"/></Link>
-        <Link to='/mchat'><img src={chat} className="h-3/4 mt-2"/></Link>
+        <button onClick={() => setSize("main")}><img src={home} className="h-3/4 mt-2"/></button>
+        <button onClick={() => setSize("chat")}><img src={chat} className="h-3/4 mt-2"/></button>
       </div>
+      </>: <>
+        <h1 className="text-white text-center text-3xl py-4">limitless.</h1>
+      
+      {/* third grid chat */}
+      <div className="bg-tile shadow-md rounded-md flex mx-8 h-4/5 text-sm">
+        <Chat myPeerId={myPeerId} ref={chatRef}/>
+      </div>
+          
+      
+      {/* footer for mobile */}
+      <div className="xl:opacity-0 sticky top-[100vh] h-12 w-full bg flex justify-around">
+        <button onClick={() => setSize("main")}><img src={home} className="h-3/4 mt-2"/></button>
+        <button onClick={() => setSize("chat")}><img src={chat} className="h-3/4 mt-2"/></button>
+      </div>
+    
+      </>}
     </div>
     
   );
