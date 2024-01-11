@@ -89,7 +89,8 @@ export const Chat = forwardRef(({
                     onChange={(e) => setMessageInput(e.target.value)}
                     className="text-white bg-gray rounded-l-lg border-4 border-r-0 border-black/20 h-full w-4/6 text-lg pl-2 placeholder-white/50"
                 />
-                <button onClick={sendChatMessage} className="bg-gray border-4 border-l-0 rounded-r-lg border-black/20 pl-2"> <img src={logo} className="h-1/2 pr-2"/></button>
+
+                    <button onClick={sendChatMessage} className="bg-gray border-4 border-l-0 rounded-r-lg border-black/20 pl-2 pr-2"><img src={logo} height={24} width={24}/></button>              
             </div>
         </div>
     );

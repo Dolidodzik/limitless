@@ -11,6 +11,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #202020;
   color: white;
+  scrollbar-color: #4b4a4a transparent;
+  scrollbar-width: none;
 }
 
 /* .App {
@@ -37,6 +39,10 @@ body {
 }
 input:focus{
   outline: none;
+}
+.jd{
+  background-image: url('img/kamilek.png') !important;
+  
 }
 * ::-webkit-scrollbar-track
 {
