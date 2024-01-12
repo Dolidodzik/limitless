@@ -14,7 +14,7 @@ const Mchat: any  = () => {
     
       {/* third grid chat */}
       <div className="bg-tile shadow-md rounded-md flex mx-8 h-4/5 text-sm">
-        <Chat myPeerId={myPeerId} ref={chatRef}/>
+        THIS SEEMS LIKE IT ISN'T USED AT ALL CAN WE GET RID OF THIS?
       </div>
           
       

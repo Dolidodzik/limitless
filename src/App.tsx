@@ -5,10 +5,10 @@ import { removeConnectionByID } from "./globals/globalFunctions";
 import { Chat, ChatRef } from "./components/chat";
 import { FileTransfers } from "./components/fileTransfers";
 import { LoadingPeerJS } from "./components/loadingPeerJS";
-import { Link } from 'react-router-dom'
+import { ChatMessage } from "./dataStructures/interfaces";
 import QRCode from 'qrcode';
-import home from './img/home.png';
-import chat from './img/chat.png';
+import homeIcon from './img/home.png';
+import chatIcon from './img/chat.png';
 
 
 
@@ -18,6 +18,11 @@ const App: React.FC = () => {
   const [myPeerId, setMyPeerId] = useState("");
   const [qrDataURL, setQrDataURL] = useState("");
   const [size, setSize] = useState("main");
+  const [chatLogs, setChatLogs] = useState<ChatMessage[]>([]);
+
+  const setParentChatLogs = (newLogs: any) => {
+    setChatLogs(newLogs)
+  }
 
   const handleCheckboxChange = (peerId: string) => {
     const connectionIndex = AppGlobals.connections.findIndex((conn) => conn.peerId === peerId);
@@ -65,6 +70,13 @@ const App: React.FC = () => {
 
   return (
     <div className="App bg-primary h-screen">
+
+<LoadingPeerJS 
+        chatRef={chatRef} 
+        myPeerId={myPeerId} 
+        setMyPeerId={setMyPeerId} 
+        forceUpdate={forceUpdate} 
+      />
    {size == 'main' ? <>   <h1 className="text-white text-center text-3xl py-4 ">limitless.</h1>
     <div className="xl:grid grid-cols-3 grid-rows-3 gap-4 flex flex-col h-[80vh] mx-8">
       {/* first grid with users in session*/}
@@ -102,7 +114,7 @@ const App: React.FC = () => {
       </div>
       {/* third grid chat */}
       <div className="bg-tile shadow-md rounded-md hidden xl:flex row-span-3">
-        <Chat myPeerId={myPeerId} ref={chatRef}/>
+        <Chat myPeerId={myPeerId} ref={chatRef} setParentChatLogs={setParentChatLogs} chatLogs={chatLogs}/>
       </div>
           
       {/* fourth grid connection */}
@@ -123,35 +135,31 @@ const App: React.FC = () => {
       </div>
       
 
-      <LoadingPeerJS 
-        chatRef={chatRef} 
-        myPeerId={myPeerId} 
-        setMyPeerId={setMyPeerId} 
-        forceUpdate={forceUpdate} 
-      />
+
       </div>
       {/* footer for mobile */}
       
       <div className="xl:opacity-0 sticky top-[100vh] h-12 w-full bg flex justify-around">
-        <button onClick={() => setSize("main")}><img src={home} className="h-3/4 mt-2"/></button>
-        <button onClick={() => setSize("chat")}><img src={chat} className="h-3/4 mt-2"/></button>
+        <button onClick={() => setSize("main")}><img src={homeIcon} className="h-3/4 mt-2"/></button>
+        <button onClick={() => setSize("chat")}><img src={chatIcon} className="h-3/4 mt-2"/></button>
       </div>
       </>: <>
         <h1 className="text-white text-center text-3xl py-4">limitless.</h1>
       
       {/* third grid chat */}
       <div className="bg-tile shadow-md rounded-md flex mx-8 h-4/5 text-sm">
-        <Chat myPeerId={myPeerId} ref={chatRef}/>
+        <Chat myPeerId={myPeerId} ref={chatRef} setParentChatLogs={setParentChatLogs} chatLogs={chatLogs} />
       </div>
           
       
       {/* footer for mobile */}
       <div className="xl:opacity-0 sticky top-[100vh] h-12 w-full bg flex justify-around">
-        <button onClick={() => setSize("main")}><img src={home} className="h-3/4 mt-2"/></button>
-        <button onClick={() => setSize("chat")}><img src={chat} className="h-3/4 mt-2"/></button>
+        <button onClick={() => setSize("main")}><img src={homeIcon} className="h-3/4 mt-2"/></button>
+        <button onClick={() => setSize("chat")}><img src={chatIcon} className="h-3/4 mt-2"/></button>
       </div>
     
-      </>}
+      </>
+    }
     </div>
     
   );

@@ -7,6 +7,8 @@ import empty from '../img/empty.png';
 
 interface ChatProps {
     myPeerId: string;
+    setParentChatLogs: (newLogs: any) => void;
+    chatLogs: ChatMessage[]
 }
 
 export interface ChatRef {
@@ -14,26 +16,27 @@ export interface ChatRef {
 }
 
 export const Chat = forwardRef(({
-    myPeerId
+    myPeerId,
+    setParentChatLogs,
+    chatLogs
 }: ChatProps, ref: ForwardedRef<ChatRef>) => {
     const [messageInput, setMessageInput] = useState("");
-    const [chatLogs, setChatLogs] = useState<ChatMessage[]>([]);
 
     const scroll: any = useRef(null);
     useEffect(() => {
         scroll.current.scrollIntoView({ behavior: "smooth" });
-      }, [chatLogs]);
+      }, []);
 
     const addMessageToChatLogs = (message: string, peerId: string) => {
         const chatMessage: ChatMessage = { peerId: peerId, message: message };
-        setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
+        setParentChatLogs((prevChatLogs: any) => [...prevChatLogs, chatMessage]);
     }
 
     const sendChatMessage = () => {
         if (messageInput) {
             const chatMessage: ChatMessage = { peerId: myPeerId, message: messageInput };
             const chatMessageTransfer = { text: messageInput, dataType: "CHAT_MESSAGE" }
-            setChatLogs((prevChatLogs) => [...prevChatLogs, chatMessage]);
+            setParentChatLogs((chatLogs: any) => [...chatLogs, chatMessage]);
             sendSomeData(chatMessageTransfer);
             setMessageInput("");
         }

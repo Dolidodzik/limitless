@@ -154,8 +154,7 @@ export const LoadingPeerJS = (props: {
                 </div>
             ) : (
                 <div>
-                    <h1> CONNECTING TO PEERJS / OBTAINING ID </h1>
-                    <h1> PUT SOME LOADING GIF / ANIMATION HERE </h1>
+                    {/* <h1> CONNECTING TO PEERJS / OBTAINING ID </h1> */}
                 </div>
             )}
 
