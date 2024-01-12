@@ -71,7 +71,9 @@ const App: React.FC = () => {
       <div className="bg-tile rounded-md flex flex-col justify-evenly text-center shadow-md">
         <p className="font-thin text-4xl p-4">Hi, {AppGlobals.ownNickname}</p>
         <div className="flex justify-center space-x-5 mb-4">
-          <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm">QR icon</button>
+          <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm">
+            <img src={qrDataURL} alt={"loading qr code"} />
+          </button>
           <p className="text-xl">or</p>
           <button className="bg-black/25 w-[25%] font-semibold text-lg rounded-sm" onClick={copy}>Copy link</button>
         </div>
