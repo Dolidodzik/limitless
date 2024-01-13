@@ -16,6 +16,7 @@ let progressUpdateHandle: any;
 export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject<ChatRef | null>, disconnectFromSelectedClient: (peerId: string) => void}) => {
     const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 
+    const [sendBtnHidden,setSendBtnHidden] = useState("visible");
 
     const localTargetPeers: string[] = AppGlobals.connections.filter((conn) => conn.isSelectedForFileTransfer).map((conn) => conn.peerId);
     console.log("APP GLOBALS: ", AppGlobals)
@@ -213,36 +214,43 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           {AppGlobals.outgoingFileTransfers.map((transfer) => (
              <div key={transfer.id} className="bg-white/10 flex rounded-lg h-20 m-4"> 
               {/* desc */}
-              <div className="flex flex-col justify-evenly mx-4 font-semibold flex-grow w-1/2 xl:w-full truncate">
+              <div className="flex flex-col justify-evenly px-4 font-semibold flex-grow w-1/3 truncate">
                 <p>{transfer.name}</p>
                 <p>{(transfer.size / 1024).toFixed(2)} KB</p>
               </div>
-              {/* buttons */}
+              <div className="flex items-center w-1/2 justify-center mx-4">
+                {/* progressbar */}
+                {transfer.receiverPeers.map((receiver) => (
+                  <div key={receiver.id} className="h-1/6 w-full border-2 border-sky-600 flex m-auto rounded-md">
+                    <div className='bg-sky-600' style={{
+                      width:`${receiver.progress}%`
+                    }}/>
+                  </div>
+                  // <div key={receiver.id} className="bg-sky-500 h-1/6 m-auto w-1/4"> 
+                  //   {receiver.progress}
+                  //   XX{ JSON.stringify(uploadProgressValues(transfer, receiver.id)) }XX
 
+                  //   <br/> 
+
+                  //   {receiver.isAborted       
+                  //     ? <div> This transfer was aborted by receiver  </div>
+                  //     : <div> {transfer.isPaused 
+                  //       ? <div> This transfer is paused <button onClick={() => {resumeOutgoingTransfer(transfer.id)}}> RESUME UPLOAD </button> </div>
+                  //       : <div> This transfer is going now <button onClick={() => {pauseOutgoingTransfer(transfer.id)}}> PAUSE UPLOAD </button> </div>
+                  //     } </div>
+                  //   }
+
+
+                  // </div>
+                ))}
+              </div>
+              {/* buttons */}
               <div className="flex mx-4 m-auto space-x-4">
-                <button className="bg-sky-600 p-2" onClick={() => {sendTransferOffer(transfer)}}>Send</button>
+                <button className={`bg-sky-600 p-2 ${transfer.progress! > 1 ? 'hidden':'visible'}`} onClick={() => {sendTransferOffer(transfer)}}>Send</button>
                 <button className="bg-red-600 p-2" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}>Delete</button>
               </div>
-
-              To peers:
-              {transfer.receiverPeers.map((receiver) => (
-                <div key={receiver.id}> 
-                  * {receiver.id}, accepted: {receiver.isAccepted.toString()}, with progress {receiver.progress}%
-                  XX{ JSON.stringify(uploadProgressValues(transfer, receiver.id)) }XX
-                  <br/> 
-
-                  {receiver.isAborted       
-                    ? <div> This transfer was aborted by receiver  </div>
-                    : <div> {transfer.isPaused 
-                      ? <div> This transfer is paused <button onClick={() => {resumeOutgoingTransfer(transfer.id)}}> RESUME UPLOAD </button> </div>
-                      : <div> This transfer is going now <button onClick={() => {pauseOutgoingTransfer(transfer.id)}}> PAUSE UPLOAD </button> </div>
-                    } </div>
-                  }
-
-
-                </div>
-              ))}
-              <br/> *
+             
+              
               </div>
             
               
