@@ -84,7 +84,7 @@ const App: React.FC = () => {
         <p className="font-thin text-4xl p-4">Hi, {AppGlobals.ownNickname}</p>
         <div className="flex justify-center items-center space-x-5 mb-4">
           <button className="bg-black/25 w-[10%] font-semibold text-lg rounded-md">
-            <img src={qrDataURL} alt={"loading qr code"} className="hover:scale-150 ease-out duration-300"/>
+            <img src={qrDataURL} alt={"loading qr code"} className="hover:scale-300 xl:hover:scale-150 ease-out duration-300"/>
           </button>
           <p className="text-xl justify-items-center">or</p>
           <button className="bg-sky-500 w-[10%] font-semibold text-lg rounded-md hover:scale-110 ease-out duration-300" onClick={copy}>Copy</button>

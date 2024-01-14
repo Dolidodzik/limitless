@@ -241,7 +241,6 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                   //     } </div>
                   //   }
 
-
                   // </div>
                 ))}
               </div>
