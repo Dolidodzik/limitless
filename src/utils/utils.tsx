@@ -116,20 +116,6 @@ export function removeDuplicateConnections(){
 
     if(index !== -1){
       AppGlobals.connections[index].connection.close();
-      console.log("REMOVING SHIT")
-      console.log("REMOVING SHIT")
-      console.log("REMOVING SHIT")
-      console.log("REMOVING SHIT")
-      console.log("REMOVING SHIT")
-      console.log("REMOVING SHIT")
-      console.log("REMOVING SHIT")
-      console.log("REMOVING SHIT")
-      console.log("REMOVING SHIT")
-      console.log("REMOVING SHIT")
-      console.log("REMOVING SHIT")
-      console.log("REMOVING SHIT")
-      console.log("REMOVING SHIT")
-      console.log("REMOVING SHIT")
       console.log(connection.connection.peer)
       AppGlobals.connections.splice(index, 1)
     }else{
