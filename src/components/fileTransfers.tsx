@@ -227,6 +227,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                       width:`${receiver.progress}%`
                     }}/>
                   </div>
+                  // uploadProgressValues(transfer.id) <= zwraca jsona z progresem
                   // <div key={receiver.id} className="bg-sky-500 h-1/6 m-auto w-1/4"> 
                   //   {receiver.progress}
                   //   XX{ JSON.stringify(uploadProgressValues(transfer, receiver.id)) }XX
@@ -241,13 +242,12 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                   //     } </div>
                   //   }
 
-
                   // </div>
                 ))}
               </div>
               {/* buttons */}
               <div className="flex mx-4 m-auto space-x-4">
-                <button className={`bg-sky-600 p-2 ${transfer.progress! > 1 ? 'hidden':'visible'}`} onClick={() => {sendTransferOffer(transfer)}}>Send</button>
+                <button className={`bg-sky-600 p-2 ${(transfer.progress != null || transfer.progress! > 0) ? 'hidden':'visible'}`} onClick={() => {sendTransferOffer(transfer)}}>Send</button>
                 <button className="bg-red-600 p-2" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}>Delete</button>
               </div>
              
