@@ -83,11 +83,11 @@ const App: React.FC = () => {
       <div className="bg-tile rounded-md flex flex-col justify-evenly text-center shadow-md">
         <p className="font-thin text-4xl p-4">Hi, {AppGlobals.ownNickname}</p>
         <div className="flex justify-center items-center space-x-5 mb-4">
-          <button className="bg-black/25 w-[10%] font-semibold text-lg rounded-md">
-            <img src={qrDataURL} alt={"loading qr code"} className="hover:scale-150 ease-out duration-300"/>
+          <button className="bg-black/25 w-[10%] font-semibold text-lg rounded-md xl:focus:scale-150 ease-out duration-300 ">
+            <img src={qrDataURL} alt={"loading qr code"} className="hover:scale-600 xl:hover:scale-100 ease-out duration-300 rounded-sm"/>
           </button>
           <p className="text-xl justify-items-center">or</p>
-          <button className="bg-sky-500 w-[10%] font-semibold text-lg rounded-md hover:scale-110 ease-out duration-300" onClick={copy}>Copy</button>
+          <button className="bg-sky-500 w-fit px-1 font-semibold text-lg rounded-md hover:scale-110 ease-out duration-300" onClick={copy}>Copy</button>
         </div>
       </div>
       {/* second grid with room */}

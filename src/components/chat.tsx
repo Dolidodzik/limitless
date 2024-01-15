@@ -24,23 +24,29 @@ export const Chat = forwardRef(({
 
     const scroll: any = useRef(null);
     useEffect(() => {
-        scroll.current.scrollIntoView({ behavior: "smooth" });
-      }, []);
+        scroll.current.scrollIntoView({ behavior: "smooth", bottom: 1 });
+      }, [chatLogs]);
 
     const addMessageToChatLogs = (message: string, peerId: string) => {
         const chatMessage: ChatMessage = { peerId: peerId, message: message };
         setParentChatLogs((prevChatLogs: any) => [...prevChatLogs, chatMessage]);
     }
 
-    const sendChatMessage = () => {
-        if (messageInput) {
-            const chatMessage: ChatMessage = { peerId: myPeerId, message: messageInput };
-            const chatMessageTransfer = { text: messageInput, dataType: "CHAT_MESSAGE" }
-            setParentChatLogs((chatLogs: any) => [...chatLogs, chatMessage]);
-            sendSomeData(chatMessageTransfer);
-            setMessageInput("");
+    const sendChatMessageViaEnter = (e: any) =>{
+        if(e.key === 'Enter'){
+            sendChatMessage()
         }
-    };
+    }
+
+        const sendChatMessage = () => {
+            if (messageInput) {
+                const chatMessage: ChatMessage = { peerId: myPeerId, message: messageInput };
+                const chatMessageTransfer = { text: messageInput, dataType: "CHAT_MESSAGE" }
+                setParentChatLogs((chatLogs: any) => [...chatLogs, chatMessage]);
+                sendSomeData(chatMessageTransfer);
+                setMessageInput("");
+            }
+        };
 
     // Use useImperativeHandle to expose the addSystemMessage function
     useImperativeHandle(ref, () => ({
@@ -53,7 +59,7 @@ export const Chat = forwardRef(({
            
         
             <div className="flex flex-col h-full w-full mx-8 xl:mx-0">
-                <div className="overflow-y-scroll p-4 flex-grow md:mx-6 mx-2" id="style-1">
+                <div className="overflow-y-scroll p-4 flex-grow overflow-hidden md:mx-6 mx-2" id="style-1">
                 {chatLogs.length === 0 ? 
                     <div className="flex flex-col text-center items-center">
                         <img src={empty} className="w-1/2 "/>
@@ -84,13 +90,14 @@ export const Chat = forwardRef(({
                     <div ref={scroll}/>
                 </div>
             
-            <div className="mb-6 flex justify-center h-14">
+            <div className="mb-6 flex max-h-14 h-full justify-center">
                 <input
                     type="text"
                     value={messageInput}
                     placeholder="Message"
                     onChange={(e) => setMessageInput(e.target.value)}
                     className="text-white bg-gray rounded-l-lg border-4 border-r-0 border-black/20 h-full w-4/6 text-lg pl-2 placeholder-white/50"
+                    onKeyDown={sendChatMessageViaEnter}
                 />
 
                     <button onClick={sendChatMessage} className="bg-gray border-4 border-l-0 rounded-r-lg border-black/20 pl-2 pr-2"><img src={logo} height={24} width={24}/></button>              

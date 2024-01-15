@@ -35,8 +35,9 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
 
         if(localTargetPeers.length === 0){
-          alert("You have to select to who you will be transfering your files, before selecting them!")
-          return;
+          return(
+            <div>pls select somebody</div>//alert
+            )
         }
 
         const newFiles = Array.from(event.target.files || []);
