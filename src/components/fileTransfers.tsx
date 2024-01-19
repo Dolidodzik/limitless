@@ -148,41 +148,38 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     }
 
     return (
-        <div className="fileTransfers">
-          <br/>
-          <h1><i> !! TODO UI/UX !! There should be some interface that allows user choose who he wants to upload to in more user friendly way than this shit: </i></h1>
-          {AppGlobals.connections.map((connection) => (
-            <div key={connection.peerId}> * {connection.peerId} 
-              <button onClick={() => props.disconnectFromSelectedClient(connection.peerId)}> disconnect </button> 
-            </div>
-          ))}
-
-
-          
-          
+        <div className="fileTransfers">     
           <h3 className="text-xl m-2">Incoming: </h3>
           {AppGlobals.incomingFileTransfers.map((transfer) => (
             <div key={transfer.id} className="bg-white/10 flex rounded-lg h-20 m-4"> 
               {/* desc */}
-              <div className="flex flex-col justify-evenly mx-4 font-semibold flex-grow w-1/2 xl:w-full truncate">
+              <div className="flex flex-col justify-evenly px-4 font-semibold w-fit truncate">
                 <p>{transfer.name}</p>
                 <p>{(transfer.size / 1024).toFixed(2)} KB</p>
               </div>
+              {/* progressbar */}
+            <div className="flex flex-grow items-center w-1/2 justify-center mx-12">
+                <div key={transfer.id} className={`h-1/6 ${(transfer.progress == null)? 'hidden': 'visible'} w-2/3 border-2 border-green-500 flex m-auto rounded-sm`}>
+                      <div className='bg-green-500' style={{
+                        width:`${transfer.progress}%`
+                      }}/>
+                </div>
+            </div>
               {/* buttons */}
               {transfer.receiverPeers[0].isAccepted ? (
-                <div className="flex mx-4 m-auto space-x-4">
-                  <button className="bg-red-600 p-2" onClick={() => deleteActiveIncomingTransfer(transfer.id)}>Reject</button>
+                <div className="flex mx-4 m-auto space-x-4 rounded-md">
+                  <button className="bg-red-600 p-2 rounded-md" onClick={() => deleteActiveIncomingTransfer(transfer.id)}>Delete</button>
                 </div>
               )
               :(
               <div className="flex mx-4 m-auto space-x-4">
-                <button className="bg-green-600 p-2" onClick={() => acceptTransfer(transfer.id)}>Accept</button>
-                <button className="bg-red-600 p-2" onClick={() => deleteActiveIncomingTransfer(transfer.id)}>Reject</button>
+                <button className="bg-green-600 p-2 rounded-md" onClick={() => acceptTransfer(transfer.id)}>Accept</button>
+                <button className="bg-red-600 p-2 rounded-md" onClick={() => deleteActiveIncomingTransfer(transfer.id)}>Reject</button>
               </div>)
               }
 
               <br/>
-              {transfer.receiverPeers[0].isAccepted ? (
+              {/* {transfer.receiverPeers[0].isAccepted ? (
                 <span> 
                   You already accepted this transfer.
                   <button onClick={() => deleteActiveIncomingTransfer(transfer.id)}> DELETE THIS TRANSFER </button>
@@ -206,7 +203,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                   ? <div> This transfer is paused </div>
                   : <div> This transfer is going now </div>
                 } </div>
-              }
+              } */}
               
             </div>
           ))}
@@ -215,15 +212,15 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           {AppGlobals.outgoingFileTransfers.map((transfer) => (
              <div key={transfer.id} className="bg-white/10 flex rounded-lg h-20 m-4"> 
               {/* desc */}
-              <div className="flex flex-col justify-evenly px-4 font-semibold flex-grow w-1/3 truncate">
+              <div className="flex flex-col justify-evenly px-4 font-semibold w-fit truncate">
                 <p>{transfer.name}</p>
                 <p>{(transfer.size / 1024).toFixed(2)} KB</p>
               </div>
-              <div className="flex items-center w-1/2 justify-center mx-4">
+              <div className="flex flex-grow items-center w-1/2 justify-center mx-12">
                 {/* progressbar */}
                 {transfer.receiverPeers.map((receiver) => (
-                  <div key={receiver.id} className="h-1/6 w-full border-2 border-sky-600 flex m-auto rounded-md">
-                    <div className='bg-sky-600' style={{
+                  <div key={receiver.id} className={`h-1/6 ${(receiver.progress == null)? 'hidden': 'visible'} w-2/3 border-2 ${transfer.isPaused ? 'border-sky-600': transfer.isAborted ? 'border-red-600' : 'border-green-600'} flex m-auto rounded-sm`}>
+                    <div className={transfer.isPaused ? 'bg-sky-600': (transfer.isAborted ? 'bg-red-600' : 'bg-green-600')} style={{
                       width:`${receiver.progress}%`
                     }}/>
                   </div>
@@ -247,8 +244,28 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
               </div>
               {/* buttons */}
               <div className="flex mx-4 m-auto space-x-4">
-                <button className={`bg-sky-600 p-2 ${(transfer.progress != null || transfer.progress! > 0) ? 'hidden':'visible'}`} onClick={() => {sendTransferOffer(transfer)}}>Send</button>
-                <button className="bg-red-600 p-2" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}>Delete</button>
+                {transfer.progress!= null || transfer.progress! > 0 ?(
+                  <>
+                    {transfer.isPaused ? 
+                      <>
+                        <button className="bg-green-600 p-2 rounded-md" onClick={() => {resumeOutgoingTransfer(transfer.id)}}>Resume</button>
+                        <button className="bg-red-600 p-2 rounded-md" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}>Delete</button>
+                      </> 
+                      :
+                      <>
+                        <button className="bg-sky-600 p-2 rounded-md" onClick={() => {pauseOutgoingTransfer(transfer.id)}}>Pause</button>
+                        <button className="bg-red-600 p-2 rounded-md" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}>Delete</button>
+                      </>
+                    }
+                    
+                  </>
+                ):(
+                  <>
+                    <button className="bg-sky-600 p-2 rounded-md" onClick={() => {sendTransferOffer(transfer)}}>Send</button>
+                    <button className="bg-red-600 p-2 rounded-md" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}>Delete</button>
+                  </>
+                )
+              }
               </div>
              
               
