@@ -26,17 +26,12 @@ export const LoadingPeerJS = (props: {
         newPeer.on("open", (id) => {
             props.setMyPeerId(id);
             setPeer(newPeer);
-            console.log("RUNNING NEW PEER ON")
             connectToPeerFromLink(newPeer)
             props.forceUpdate();
         });
     
         newPeer.on("connection", (conn) => {
           conn.on("open", () => {
-
-            console.log("OEPNING NEW CONNECTION");
-            console.log(AppGlobals.connections)
-
             const newConnectionData: ConnectionData = {
               connection: conn,
               peerId: conn.peer,
@@ -96,14 +91,11 @@ export const LoadingPeerJS = (props: {
         }
 
         if(AppGlobals.connections.length > 0){
-          console.log("ALREADY CONNECTED");
           return;
         }
 
         if (thisPeer && peerId) {
-          console.log(peerId)
           const conn = thisPeer.connect(peerId);
-          console.log(conn)
           conn.on("open", () => {
             const newConnectionData: ConnectionData = {
               connection: conn,
