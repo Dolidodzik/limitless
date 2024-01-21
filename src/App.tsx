@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback } from "react";
 
 import { AppGlobals } from './globals/globals';
 import { removeConnectionByID } from "./globals/globalFunctions";
@@ -6,6 +6,7 @@ import { Chat, ChatRef } from "./components/chat";
 import { FileTransfers } from "./components/fileTransfers";
 import { LoadingPeerJS } from "./components/loadingPeerJS";
 import { ChatMessage } from "./dataStructures/interfaces";
+import { useBeforeUnload } from "react-router-dom";
 import QRCode from 'qrcode';
 import homeIcon from './img/home.png';
 import chatIcon from './img/chat.png';
@@ -19,6 +20,18 @@ const App: React.FC = () => {
   const [qrDataURL, setQrDataURL] = useState("");
   const [size, setSize] = useState("main");
   const [chatLogs, setChatLogs] = useState<ChatMessage[]>([]);
+
+  // handling closing browser/tab event, by simply closing all connections on that event
+  const [dirty, toggleDirty] = useState(false);
+  const dirtyFn = useCallback(() => {
+    console.log("FUNC")
+    AppGlobals.connections.forEach((c) => {
+      c.connection.close()
+    });
+    return dirty;
+  }, [dirty]);
+  useBeforeUnload(dirtyFn, undefined);
+
 
   const setParentChatLogs = (newLogs: any) => {
     setChatLogs(newLogs)
@@ -65,8 +78,7 @@ const App: React.FC = () => {
       console.error(err)
     })
   }
-  //console.log(myPeerId)
-  //console.log(qrDataURL)
+
 
   return (
     <div className="App bg-primary h-screen">
