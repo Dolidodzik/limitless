@@ -216,30 +216,14 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                 <p>{transfer.name}</p>
                 <p>{(transfer.size / 1024).toFixed(2)} KB</p>
               </div>
-              <div className="flex flex-grow items-center w-1/2 justify-center mx-12">
+              <div className="flex items-center w-full justify-center mx-12">
                 {/* progressbar */}
                 {transfer.receiverPeers.map((receiver) => (
-                  <div key={receiver.id} className={`h-1/6 ${(receiver.progress == null)? 'hidden': 'visible'} w-2/3 border-2 ${transfer.isPaused ? 'border-sky-600': transfer.isAborted ? 'border-red-600' : 'border-green-600'} flex m-auto rounded-sm`}>
-                    <div className={transfer.isPaused ? 'bg-sky-600': (transfer.isAborted ? 'bg-red-600' : 'bg-green-600')} style={{
+                  <div key={receiver.id} className={`h-1/6 ${(receiver.progress == null)? 'hidden': 'visible'} w-2/3 border-2 ${receiver.isAborted ? 'border-red-600': transfer.isPaused ? 'border-sky-600' : 'border-green-600'} flex m-auto rounded-sm`}>
+                    <div className={receiver.isAborted ? 'bg-red-600': (transfer.isPaused ? 'bg-sky-600' : 'bg-green-600')} style={{
                       width:`${receiver.progress}%`
                     }}/>
                   </div>
-                  // uploadProgressValues(transfer.id) <= zwraca jsona z progresem
-                  // <div key={receiver.id} className="bg-sky-500 h-1/6 m-auto w-1/4"> 
-                  //   {receiver.progress}
-                  //   XX{ JSON.stringify(uploadProgressValues(transfer, receiver.id)) }XX
-
-                  //   <br/> 
-
-                  //   {receiver.isAborted       
-                  //     ? <div> This transfer was aborted by receiver  </div>
-                  //     : <div> {transfer.isPaused 
-                  //       ? <div> This transfer is paused <button onClick={() => {resumeOutgoingTransfer(transfer.id)}}> RESUME UPLOAD </button> </div>
-                  //       : <div> This transfer is going now <button onClick={() => {pauseOutgoingTransfer(transfer.id)}}> PAUSE UPLOAD </button> </div>
-                  //     } </div>
-                  //   }
-
-                  // </div>
                 ))}
               </div>
               {/* buttons */}
