@@ -146,6 +146,12 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
       sendTransferPauseNotification(false, transferID)
       forceUpdate();
     }
+    const shortenFileName = (filename:string) => {
+      const parts = filename.split('.');
+      const fileExtension = parts.pop();
+      const fileNameWithoutExtension = parts.join('.');
+      return `${fileNameWithoutExtension.slice(0, 5)}...${fileExtension}`;
+    };
 
     return (
         <div className="fileTransfers">     
@@ -154,7 +160,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
             <div key={transfer.id} className="bg-white/10 flex rounded-lg h-20 m-4"> 
               {/* desc */}
               <div className="flex flex-col justify-evenly px-4 font-semibold w-fit truncate">
-                <p>{transfer.name}</p>
+                <p>{shortenFileName(transfer.name)}</p>
                 <p>{(transfer.size / 1024).toFixed(2)} KB</p>
               </div>
               {/* progressbar */}
@@ -213,13 +219,13 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
              <div key={transfer.id} className="bg-white/10 flex rounded-lg h-20 m-4"> 
               {/* desc */}
               <div className="flex flex-col justify-evenly px-4 font-semibold w-fit truncate">
-                <p>{transfer.name}</p>
+                <p>{shortenFileName(transfer.name)}</p>
                 <p>{(transfer.size / 1024).toFixed(2)} KB</p>
               </div>
+              {/* progressbar */}
               <div className="flex items-center w-full justify-center mx-12">
-                {/* progressbar */}
                 {transfer.receiverPeers.map((receiver) => (
-                  <div key={receiver.id} className={`h-1/6 ${(receiver.progress == null)? 'hidden': 'visible'} w-2/3 border-2 ${receiver.isAborted ? 'border-red-600': transfer.isPaused ? 'border-sky-600' : 'border-green-600'} flex m-auto rounded-sm`}>
+                  <div key={receiver.id} className={`h-1/6 ${(receiver.progress == null)? 'hidden': 'visible'} w-3/4 border-2 ${receiver.isAborted ? 'border-red-600': transfer.isPaused ? 'border-sky-600' : 'border-green-600'} flex m-auto rounded-sm`}>
                     <div className={receiver.isAborted ? 'bg-red-600': (transfer.isPaused ? 'bg-sky-600' : 'bg-green-600')} style={{
                       width:`${receiver.progress}%`
                     }}/>
@@ -227,7 +233,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                 ))}
               </div>
               {/* buttons */}
-              <div className="flex mx-4 m-auto space-x-4">
+              <div className="flex w-72 mx-4 m-auto space-x-4 justify-end">
                 {transfer.progress!= null || transfer.progress! > 0 ?(
                   <>
                     {transfer.isPaused ? 
