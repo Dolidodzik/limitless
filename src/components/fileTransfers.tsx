@@ -250,7 +250,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                     
                   </>
                 ):(
-                  <>
+                  <>{s.isAccepted}
                     <button className="bg-sky-600 p-2 rounded-md after:content-['⨠'] xl:after:content-['Send']" onClick={() => {sendTransferOffer(transfer)}}></button>
                     <button className="bg-red-600 p-2 rounded-md after:content-['❌'] xl:after:content-['Delete']" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}></button>
                   </>
