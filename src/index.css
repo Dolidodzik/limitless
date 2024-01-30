@@ -182,6 +182,40 @@ input:focus{
   display: none;
 }
 
+.popup {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 15px;
+  background-color: #08acf2;
+  animation: fadeOut 5000ms ease-out; /* Animation with keyframes */
+  border-radius: 0.125rem;
+}
+
+.popup.visible {
+  display: block;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 
 @layer components{
 

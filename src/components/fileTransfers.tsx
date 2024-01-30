@@ -1,4 +1,3 @@
-
 import React, { useState, ChangeEvent, useEffect } from "react";
 
 import { AppConfig } from "../config";
@@ -23,6 +22,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     console.log("APP GLOBALS: ", AppGlobals)
 
     const [hiddenSendButtons, setHiddenSendButtons] = useState<any>([]);
+    const [showSelectSomebodyMessage, setShowSelectSomebodyMessage] = useState<boolean>(false);
 
     useEffect(() => {
       progressUpdateHandle = setInterval(() => {
@@ -37,10 +37,12 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
 
     const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
 
-        if(localTargetPeers.length === 0){
-          return(
-            <div>pls select somebody</div>//alert
-            )
+        //alert
+        if (localTargetPeers.length === 0) {
+          setShowSelectSomebodyMessage(true);
+          setTimeout(() => {
+            setShowSelectSomebodyMessage(false);
+          }, 5000); // Hide the message after 10 seconds
         }
 
         const newFiles = Array.from(event.target.files || []);
@@ -150,17 +152,23 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
       sendTransferPauseNotification(false, transferID)
       forceUpdate();
     }
-    const shortenFileName = (filename:string) => {
-      const parts = filename.split('.');
+    
+    const shortenFileName = (filename: string) => {
+      const parts = filename.split('.'); //taking extension from file
       const fileExtension = parts.pop();
       const fileNameWithoutExtension = parts.join('.');
-      return `${fileNameWithoutExtension.slice(0, 5)}...${fileExtension}`;
+      return `${fileNameWithoutExtension.slice(0, 5)}...${fileExtension}`; // five letters of file name and extension of that file
     }
     const isSendButtonHidden = (transferID:any) => {
       return hiddenSendButtons.includes(transferID);
     };
     return (
-        <div className="fileTransfers">     
+        <div className="fileTransfers">
+              <div
+                className={`popup ${showSelectSomebodyMessage ? 'visible' : ''}`}
+              >
+                <p>Please select somebody</p>
+              </div>
           <h3 className="text-xl m-2">Incoming: </h3>
           {AppGlobals.incomingFileTransfers.map((transfer) => (
             <div key={transfer.id} className="bg-white/10 flex rounded-lg h-20 m-4"> 
