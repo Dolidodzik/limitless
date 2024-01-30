@@ -8,8 +8,12 @@ import { calculateTotalChunks, generateRandomString } from "../utils/utils";
 import { userAccepts } from "../dataStructures/interfaces";
 import { ChatRef } from "./chat";
 import { sendSomeData, sendTransferPauseNotification } from "../utils/senderFunctions";
-import { dealWithTransferProgressUpdates, uploadProgressValues } from '../utils/utils';
-
+import { dealWithTransferProgressUpdates} from '../utils/utils';
+import checkIcon from '../img/check.png';
+import crossIcon from '../img/cross.png';
+import pauseIcon from '../img/pause.png';
+import playIcon from '../img/play.png';
+import sendFileIcon from '../img/send-file.png';
 
 let progressUpdateHandle: any;
  
@@ -17,6 +21,9 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
     const localTargetPeers: string[] = AppGlobals.connections.filter((conn) => conn.isSelectedForFileTransfer).map((conn) => conn.peerId);
     console.log("APP GLOBALS: ", AppGlobals)
+
+    const [hiddenSendButtons, setHiddenSendButtons] = useState<any>([]);
+
     useEffect(() => {
       progressUpdateHandle = setInterval(() => {
         dealWithTransferProgressUpdates(forceUpdate)
@@ -26,7 +33,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
       return () => {
         clearInterval(progressUpdateHandle);
       };
-    }, []);
+    }, [forceUpdate]);
 
     const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
 
@@ -76,6 +83,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
         console.log("sending transfer offer: ", transfer, "sex", peerUserAccepts)
         sendSomeData(finalOffer, peerUserAccepts.id)
       });
+      setHiddenSendButtons((prevHiddenButtons:any) => [...prevHiddenButtons, transfer.id]);
     }
 
     const acceptTransfer = (id: string) => {
@@ -148,7 +156,9 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
       const fileNameWithoutExtension = parts.join('.');
       return `${fileNameWithoutExtension.slice(0, 5)}...${fileExtension}`;
     }
-
+    const isSendButtonHidden = (transferID:any) => {
+      return hiddenSendButtons.includes(transferID);
+    };
     return (
         <div className="fileTransfers">     
           <h3 className="text-xl m-2">Incoming: </h3>
@@ -161,8 +171,8 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
               </div>
               {/* progressbar */}
               <div className="flex flex-col items-center w-full mt-4">
-                <div className={`font-thin text-lg ${transfer.isAborted ? 'text-red-600': (transfer.isPaused ? 'text-sky-600' : 'text-green-600')}`}>{transfer.isAborted ? '❌' : transfer.isPaused ? '⏸' : transfer.progress ? `${(transfer.progress).toFixed(0)}%` : ""}</div>
-                <div key={transfer.id} className={`h-1/6 ${(transfer.progress == null)? 'hidden': 'visible'} w-3/4 border-2 ${transfer.isAborted ? 'border-red-600': transfer.isPaused ? 'border-sky-600' : 'border-green-600'} flex rounded-sm`}>
+                <div className={`font-thin text-lg ${transfer.isAborted ? 'text-red-600': (transfer.isPaused ? 'text-sky-600' : 'text-green-600')}`}>{transfer.isAborted ? 'Aborted' : transfer.isPaused ? 'Paused' : transfer.progress ? `${(transfer.progress).toFixed(0)}%` : ""}</div>
+                <div key={transfer.id} className={`h-1/6 ${(transfer.progress == null)? 'hidden': 'visible'} w-3/4 border-2 ${transfer.isAborted ? 'border-red-600': transfer.isPaused ? 'border-sky-600' : 'border-green-600'} flex rounded-sm mt-2`}>
                       <div className={transfer.isAborted ? 'bg-red-600': (transfer.isPaused ? 'bg-sky-600' : 'bg-green-600')} style={{
                         width:`${transfer.progress}%`
                       }}/>
@@ -170,44 +180,16 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
               </div>
               {/* buttons */}
               {transfer.receiverPeers[0].isAccepted ? (
-                <div className="flex mx-4 m-auto space-x-4 rounded-md">
-                  <button className="bg-red-600 p-2 rounded-md after:content-['❌'] xl:after:content-['Delete']" onClick={() => deleteActiveIncomingTransfer(transfer.id)}></button>
+                <div className="flex mx-4 m-auto space-x-4">
+                  <button className="p-2 rounded-md" onClick={() => deleteActiveIncomingTransfer(transfer.id)}><img className="xl:w-9" src={crossIcon} alt="delete"/></button>
                 </div>
               )
               :(
               <div className="flex mx-4 m-auto space-x-4">
-                <button className="bg-green-600 p-2 rounded-md after:content-['✔'] xl:after:content-['Accept']" onClick={() => acceptTransfer(transfer.id)}></button>
-                <button className="bg-red-600 p-2 rounded-md after:content-['❌'] xl:after:content-['Reject']" onClick={() => deleteActiveIncomingTransfer(transfer.id)}></button>
+                <button className="p-2" onClick={() => acceptTransfer(transfer.id)}><img className="xl:w-14" src={checkIcon} alt="accept"/></button>
+                <button className="p-2" onClick={() => deleteActiveIncomingTransfer(transfer.id)}><img className="xl:w-10" src={crossIcon} alt="delete"/></button>
               </div>)
               }
-
-              <br/>
-              {/* {transfer.receiverPeers[0].isAccepted ? (
-                <span> 
-                  You already accepted this transfer.
-                  <button onClick={() => deleteActiveIncomingTransfer(transfer.id)}> DELETE THIS TRANSFER </button>
-                  {transfer.progress == null ? 
-                    <span> Sender haven't started sending yet. </span>
-                    : 
-                    <span> 
-                    
-                    Progress: {transfer.progress}, 
-                    { JSON.stringify(uploadProgressValues(transfer, null)) }
-                    </span>
-                  }
-                </span>
-              ) : (
-                <span> You didn't accept this transfer. </span>
-              )}
-              <br/>
-              {transfer.isAborted   
-                ? <div> This transfer is aborted </div>
-                : <div> {transfer.isPaused       
-                  ? <div> This transfer is paused </div>
-                  : <div> This transfer is going now </div>
-                } </div>
-              } */}
-              
             </div>
           ))}
 
@@ -223,8 +205,8 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
               <div className="flex flex-col items-center w-full mt-4">
                 {transfer.receiverPeers.map((receiver) => (
                   <>
-                    <div className={`font-thin text-lg ${receiver.isAborted ? 'text-red-600': (transfer.isPaused ? 'text-sky-600' : 'text-green-600')}`}>{receiver.isAborted ? '❌' : transfer.isPaused ? '⏸' : receiver.progress ? `${(receiver.progress).toFixed(0)}%` : ""}</div>
-                    <div key={receiver.id} className={`h-1/6 ${(receiver.progress == null)? 'hidden': 'visible'} w-3/4 border-2 ${receiver.isAborted ? 'border-red-600': transfer.isPaused ? 'border-sky-600' : 'border-green-600'} flex rounded-sm`}>
+                    <div className={`font-thin text-lg ${receiver.isAborted ? 'text-red-600': (transfer.isPaused ? 'text-sky-600' : 'text-green-600')}`}>{receiver.isAborted ? 'Aborted' : transfer.isPaused ? 'Paused' : receiver.progress ? `${(receiver.progress).toFixed(0)}%` : ""}</div>
+                    <div key={receiver.id} className={`h-1/6 ${(receiver.progress == null)? 'hidden': 'visible'} w-3/4 border-2 ${receiver.isAborted ? 'border-red-600': transfer.isPaused ? 'border-sky-600' : 'border-green-600'} flex rounded-sm mt-2`}>
                       <div className={receiver.isAborted ? 'bg-red-600': (transfer.isPaused ? 'bg-sky-600' : 'bg-green-600')} style={{
                         width:`${receiver.progress}%`
                       }}/>
@@ -238,33 +220,30 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                   <>
                     {transfer.isPaused ? 
                       <>
-                        <button className="bg-green-600 p-2 rounded-md after:content-['▶'] xl:after:content-['Resume']" onClick={() => {resumeOutgoingTransfer(transfer.id)}}></button>
-                        <button className="bg-red-600 p-2 rounded-md after:content-['❌'] xl:after:content-['Delete']" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}></button>
+                        <button className="p-2" onClick={() => {resumeOutgoingTransfer(transfer.id)}}><img className="xl:w-6" src={playIcon} alt="resume"/></button>
+                        <button className="p-2" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}><img className="xl:w-6" src={crossIcon} alt="delete"/></button>
                       </> 
                       :
                       <>
-                        <button className="bg-sky-600 p-2 rounded-md  after:content-['⏸'] xl:after:content-['Pause']" onClick={() => {pauseOutgoingTransfer(transfer.id)}}></button>
-                        <button className="bg-red-600 p-2 rounded-md  after:content-['❌'] xl:after:content-['Delete']" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}></button>
+                        <button className="p-2" onClick={() => {pauseOutgoingTransfer(transfer.id)}}><img className="xl:w-6" src={pauseIcon} alt="pause"/></button>
+                        <button className="p-2" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}><img className="xl:w-6" src={crossIcon} alt="delete"/></button>
                       </>
                     }
                     
                   </>
                 ):(
-                  <>{s.isAccepted}
-                    <button className="bg-sky-600 p-2 rounded-md after:content-['⨠'] xl:after:content-['Send']" onClick={() => {sendTransferOffer(transfer)}}></button>
-                    <button className="bg-red-600 p-2 rounded-md after:content-['❌'] xl:after:content-['Delete']" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}></button>
+                  <>
+                  {!isSendButtonHidden(transfer.id) && (
+                        <button className="p-2" onClick={() => {sendTransferOffer(transfer)}}><img className="xl:w-6" src={sendFileIcon} alt="send"/></button>
+                  )}
+                        <button className="p-2" onClick={() => deleteActiveOutgoingTransfer(transfer.id)}><img className="xl:w-6" src={crossIcon} alt="delete"/></button>
                   </>
                 )
               }
               </div>
-             
-              
               </div>
-            
-              
           ))}
 
-        
           <br/>
           <div className="flex justify-center text-center">
             <label className="cursor-pointer text-2xl shadow-2xl w-1/2 xl:w-1/4 py-4 ">
@@ -272,8 +251,6 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
               Add files
             </label>
           </div>
-          <br/>
-
         </div>
     );
 };
