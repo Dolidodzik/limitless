@@ -7,6 +7,7 @@ import { FileTransfers } from "./components/fileTransfers";
 import { LoadingPeerJS } from "./components/loadingPeerJS";
 import { ChatMessage } from "./dataStructures/interfaces";
 import { useBeforeUnload } from "react-router-dom";
+import { AppConfig } from "./config";
 import QRCode from 'qrcode';
 import homeIcon from './img/home.png';
 import chatIcon from './img/chat.png';
@@ -32,6 +33,8 @@ const App: React.FC = () => {
   }, [dirty]);
   useBeforeUnload(dirtyFn, undefined);
 
+
+  console.log("appglobals", AppGlobals)
 
   const setParentChatLogs = (newLogs: any) => {
     setChatLogs(newLogs)
@@ -62,11 +65,16 @@ const App: React.FC = () => {
   }
   //copy to clipboard peerId
   const copy = async () => {
-    await navigator.clipboard.writeText("http://localhost:3000/"+myPeerId);
+    const text = AppConfig.frontendAddress + myPeerId;
+    if(navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+    } else {
+        alert("Clipboard copying may not work on localhost, here's your link: "+text);
+    }
   };
 
   const returnLink = () => {
-    return "http://localhost:3000/"+myPeerId;
+    return AppConfig.frontendAddress+myPeerId;
   }
 
   if(!qrDataURL && myPeerId){
