@@ -7,6 +7,7 @@ import { ConnectionData } from "../dataStructures/interfaces";
 import { handleReceivedData } from "../utils/receiverFunctions";
 import { ChatRef } from "./chat";
 import { sendNicknameManifest } from "../utils/senderFunctions";
+import { showAlert } from "../alertService";
 
 
 
@@ -86,7 +87,7 @@ export const LoadingPeerJS = (props: {
         const alphanumericRegex = /^[a-zA-Z0-9]+$/;
 
         if(alphanumericRegex.test(peerId)){
-          alert("PROVIDED LINK CONTAINS NON-ALPHANUMERIC CHARACTER, SO IT IS INVALID")
+          showAlert("PROVIDED LINK CONTAINS NON-ALPHANUMERIC CHARACTER, SO IT IS INVALID")
           return;
         }
 

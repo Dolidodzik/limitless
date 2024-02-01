@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback , useEffect} from "react";
 
 import { AppGlobals } from './globals/globals';
 import { removeConnectionByID } from "./globals/globalFunctions";
@@ -11,6 +11,8 @@ import { AppConfig } from "./config";
 import QRCode from 'qrcode';
 import homeIcon from './img/home.png';
 import chatIcon from './img/chat.png';
+import AlertPopup from "./components/AlertPopup";
+import { setAlertFunction } from './alertService';
 
 
 
@@ -21,6 +23,30 @@ const App: React.FC = () => {
   const [qrDataURL, setQrDataURL] = useState("");
   const [size, setSize] = useState("main");
   const [chatLogs, setChatLogs] = useState<ChatMessage[]>([]);
+  const [alertNotification, setAlertNotification] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Set the showAlert function in the alertService
+    setAlertFunction((message: string) => {
+      // Log the message when showAlertFunction is called
+      console.log('Alert from setAlertFunction:', message);
+      
+      setAlertNotification(message);
+    });
+    console.log('useEffect działa')
+    // Cleanup function
+    return () => {
+      setAlertFunction(null);
+    };
+  }, []);
+
+  // const showAlert = (message: any) => {
+  //   setAlertNotification(message);
+
+  //   setTimeout(() => {
+  //     setAlertNotification(null);
+  //   }, 5000);
+  // };
 
   // handling closing browser/tab event, by simply closing all connections on that event
   const [dirty, toggleDirty] = useState(false);
@@ -90,14 +116,14 @@ const App: React.FC = () => {
 
   return (
     <div className="App bg-primary h-screen">
-
-<LoadingPeerJS 
+      <LoadingPeerJS 
         chatRef={chatRef} 
         myPeerId={myPeerId} 
         setMyPeerId={setMyPeerId} 
         forceUpdate={forceUpdate} 
       />
-   {size == 'main' ? <>   <h1 className="text-white text-center text-3xl py-4 ">limitless.</h1>
+   {size === 'main' ? <>   <h1 className="text-white text-center text-3xl py-4 ">limitless.</h1>
+   {alertNotification && <AlertPopup alert={alertNotification} onClose={() => setAlertNotification(null)} />}
     <div className="xl:grid grid-cols-3 grid-rows-3 gap-4 flex flex-col h-[80vh] mx-8">
       {/* first grid with users in session*/}
       <div className="bg-tile rounded-md flex flex-col justify-evenly text-center shadow-md">
@@ -160,8 +186,8 @@ const App: React.FC = () => {
       {/* footer for mobile */}
       
       <div className="xl:opacity-0 sticky top-[100vh] h-12 w-full bg flex justify-around">
-        <button onClick={() => setSize("main")}><img src={homeIcon} className="h-3/4 mt-2"/></button>
-        <button onClick={() => setSize("chat")}><img src={chatIcon} className="h-3/4 mt-2"/></button>
+        <button onClick={() => setSize("main")}><img src={homeIcon} className="h-3/4 mt-2" alt="home"/></button>
+        <button onClick={() => setSize("chat")}><img src={chatIcon} className="h-3/4 mt-2" alt="chat"/></button>
       </div>
       </>: <>
         <h1 className="text-white text-center text-3xl py-4">limitless.</h1>
@@ -174,8 +200,8 @@ const App: React.FC = () => {
       
       {/* footer for mobile */}
       <div className="xl:opacity-0 sticky top-[100vh] h-12 w-full bg flex justify-around">
-        <button onClick={() => setSize("main")}><img src={homeIcon} className="h-3/4 mt-2"/></button>
-        <button onClick={() => setSize("chat")}><img src={chatIcon} className="h-3/4 mt-2"/></button>
+        <button onClick={() => setSize("main")}><img src={homeIcon} className="h-3/4 mt-2" alt="home"/></button>
+        <button onClick={() => setSize("chat")}><img src={chatIcon} className="h-3/4 mt-2" alt="chat"/></button>
       </div>
     
       </>
@@ -184,5 +210,4 @@ const App: React.FC = () => {
     
   );
 };
-
 export default App;

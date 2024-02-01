@@ -1,6 +1,8 @@
+import React from "react";
 import { FileTransfer } from '../dataStructures/classes'; 
 import { sendChunksData } from './senderFunctions';
 import { AppGlobals } from '../globals/globals';
+import { showAlert } from "../alertService";
 
 
 // FILE_TRANSFER_ACCEPT - receiver got the FILE_TRANSFER_OFFER, and now sends back message which is greenlighting sender to actually start sending chunks
@@ -29,7 +31,7 @@ export function receiveFileTransferFileAccept(
         sendChunksData(updatedFile.selectedFile, connectionData, updatedFile.id)
         forceUpdate()
     }else{
-        alert("BIG ERROR SELECTED FILE IS EMPTY, CANNOT SEND OR CONNECTION DATA IS EMPTY FOR SOME REASON")
+        showAlert("BIG ERROR SELECTED FILE IS EMPTY, CANNOT SEND OR CONNECTION DATA IS EMPTY FOR SOME REASON")
     }
 
     forceUpdate();
@@ -37,12 +39,11 @@ export function receiveFileTransferFileAccept(
 
 
 // FILE_CHUNK - file chunk received
-export function receiveFileChunk(
+export function ReceiveFileChunk(
         senderPeerId: string, 
         data: any, 
         forceUpdate: () => void
     ){ 
-
     const { chunk, currentChunk, totalChunks, name, type, transferID, chunkOrder } = data;
     const chunkData = new Uint8Array(chunk);
     const fileChunk = new Blob([chunkData], { type });
@@ -75,7 +76,7 @@ export function receiveFileChunk(
             AppGlobals.incomingFileTransfers[transferIndex].progress = progress;
             forceUpdate()
         } else {
-            alert(`No reciver transfer found with ID ${transferID}.`);
+            showAlert(`No reciver transfer found with ID ${transferID}.`);
         }
     }
 
@@ -87,7 +88,7 @@ export function receiveFileChunk(
         if(beforeSorting === AppGlobals.receivedChunks){
           // console.log("before sorting chunks they were fine")
         }else{
-          alert("before sorting chunks had order issue")
+          showAlert("before sorting chunks had order issue")
         }
 
         const combinedChunks = AppGlobals.receivedChunks[transferID].chunks.map(chunkInfo => chunkInfo.blob);
@@ -129,7 +130,7 @@ export function handleReceivedData (
     }
 
     if (data.dataType === "FILE_CHUNK") {
-      receiveFileChunk(
+      ReceiveFileChunk(
         senderPeerId,
         data,
         forceUpdate
@@ -196,3 +197,10 @@ export function handleReceivedData (
       console.warn("received some data with unknown dataType")
     }
   };
+  export const ReceiverFunctions: React.FC = () =>{
+  return (
+    <div>
+
+    </div>
+  )
+}

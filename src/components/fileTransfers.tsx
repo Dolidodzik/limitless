@@ -13,6 +13,7 @@ import crossIcon from '../img/cross.png';
 import pauseIcon from '../img/pause.png';
 import playIcon from '../img/play.png';
 import sendFileIcon from '../img/send-file.png';
+import { showAlert } from "../alertService";
 
 let progressUpdateHandle: any;
  
@@ -22,7 +23,6 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     console.log("APP GLOBALS: ", AppGlobals)
 
     const [hiddenSendButtons, setHiddenSendButtons] = useState<any>([]);
-    const [showSelectSomebodyMessage, setShowSelectSomebodyMessage] = useState<boolean>(false);
 
     useEffect(() => {
       progressUpdateHandle = setInterval(() => {
@@ -39,10 +39,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
 
         //alert
         if (localTargetPeers.length === 0) {
-          setShowSelectSomebodyMessage(true);
-          setTimeout(() => {
-            setShowSelectSomebodyMessage(false);
-          }, 5000); // Hide the message after 10 seconds
+          showAlert('Please select somebody')
         }
 
         const newFiles = Array.from(event.target.files || []);
@@ -164,11 +161,11 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     };
     return (
         <div className="fileTransfers">
-              <div
+              {/* <div
                 className={`popup ${showSelectSomebodyMessage ? 'visible' : ''}`}
               >
                 <p>Please select somebody</p>
-              </div>
+              </div> */}
           <h3 className="text-xl m-2">Incoming: </h3>
           {AppGlobals.incomingFileTransfers.map((transfer) => (
             <div key={transfer.id} className="bg-white/10 flex rounded-lg h-20 m-4"> 
