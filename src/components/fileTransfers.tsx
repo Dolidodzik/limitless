@@ -14,6 +14,7 @@ import pauseIcon from '../img/pause.png';
 import playIcon from '../img/play.png';
 import sendFileIcon from '../img/send-file.png';
 import { showAlert } from "../alertService";
+import _debounce from 'lodash/debounce';
 
 let progressUpdateHandle: any;
  
@@ -23,7 +24,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     console.log("APP GLOBALS: ", AppGlobals)
 
     const [hiddenSendButtons, setHiddenSendButtons] = useState<any>([]);
-
+    const [hoveredTransfer, setHoveredTransfer] = useState(null);
     useEffect(() => {
       progressUpdateHandle = setInterval(() => {
         dealWithTransferProgressUpdates(forceUpdate)
@@ -159,6 +160,9 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     const isSendButtonHidden = (transferID:any) => {
       return hiddenSendButtons.includes(transferID);
     };
+ 
+
+    
     return (
         <div className="fileTransfers">
               {/* <div
@@ -199,7 +203,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
           ))}
 
           <h3 className="text-xl m-2">Outgoing: </h3>
-          {AppGlobals.outgoingFileTransfers.map((transfer) => (
+          {AppGlobals.outgoingFileTransfers.map((transfer:any) => (
              <div key={transfer.id} className="bg-white/10 flex rounded-lg h-20 m-4"> 
               {/* desc */}
               <div className="flex flex-col justify-evenly px-4 font-semibold w-64 truncate">
@@ -207,18 +211,122 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                 <p>{((transfer.size / 1024) * 0.001).toFixed(2)} MB</p>
               </div>
               {/* progressbar */}
-              <div className="flex flex-col items-center w-full mt-4">
-                {transfer.receiverPeers.map((receiver) => (
-                  <>
-                    <div className={`font-thin text-lg ${receiver.isAborted ? 'text-red-600': (transfer.isPaused ? 'text-sky-600' : 'text-green-600')}`}>{receiver.isAborted ? 'Aborted' : transfer.isPaused ? 'Paused' : receiver.progress ? `${(receiver.progress).toFixed(0)}%` : ""}</div>
-                    <div key={receiver.id} className={`h-1/6 ${(receiver.progress == null)? 'hidden': 'visible'} w-3/4 border-2 ${receiver.isAborted ? 'border-red-600': transfer.isPaused ? 'border-sky-600' : 'border-green-600'} flex rounded-sm mt-2`}>
-                      <div className={receiver.isAborted ? 'bg-red-600': (transfer.isPaused ? 'bg-sky-600' : 'bg-green-600')} style={{
-                        width:`${receiver.progress}%`
-                      }}/>
-                    </div>
-                  </>
+        {AppGlobals.outgoingFileTransfers.map((transfer:any) => {
+        const totalReceivers = transfer.receiverPeers.length;
+
+        const renderSingleProgressBar = (receiver:any) => (
+          <>
+            <div
+              className={`font-thin text-lg ${
+                receiver.isAborted
+                  ? 'text-red-600'
+                  : transfer.isPaused
+                  ? 'text-sky-600'
+                  : 'text-green-600'
+              }`}
+            >
+              {receiver.isAborted
+                ? 'Aborted'
+                : transfer.isPaused
+                ? 'Paused'
+                : receiver.progress !== null
+                ? `${receiver.progress.toFixed(0)}%`
+                : ''}
+            </div>
+            <div
+              className={`h-1/6 ${
+                receiver.progress == null ? 'hidden' : 'visible'
+              } w-3/4 border-2 ${
+                receiver.isAborted
+                  ? 'border-red-600'
+                  : transfer.isPaused
+                  ? 'border-sky-600'
+                  : 'border-green-600'
+              } flex rounded-sm mt-2`}
+            >
+              <div
+                className={
+                  receiver.isAborted
+                    ? 'bg-red-600'
+                    : transfer.isPaused
+                    ? 'bg-sky-600'
+                    : 'bg-green-600'
+                }
+                style={{
+                  width: `${receiver.progress || 0}%`,
+                }}
+              />
+            </div>
+          </>
+        );
+
+        // Calculate average progress for multiple receivers
+        const averageProgress =
+          totalReceivers > 1
+            ? (
+                transfer.receiverPeers.reduce(
+                  (sum:number, receiver:any) =>
+                    sum + (receiver.progress ? receiver.progress : 0),
+                  0
+                ) / totalReceivers
+              ).toFixed(0)
+            : transfer.receiverPeers[0]?.progress.toFixed(0) || 0;
+
+        return (
+          <div
+            className="flex flex-col items-center w-full mt-4"
+            onMouseEnter={() => setHoveredTransfer(transfer)}
+            onMouseLeave={() => setHoveredTransfer(null)}
+            key={transfer.id}
+          >
+            {totalReceivers === 1 ? (
+              // Original progress bar for a single receiver
+              renderSingleProgressBar(transfer.receiverPeers[0])
+            ) : (
+              // Main progress bar with average for multiple receivers
+              <>
+                <div
+                  className={`font-thin text-lg ${
+                    transfer.isPaused ? 'text-sky-600' : 'text-green-600'
+                  }`}
+                >
+                  {transfer.isPaused ? 'Paused' : `${averageProgress}%`}
+                </div>
+                <div
+                  className={`h-1/6 w-3/4 border-2 ${
+                    transfer.isPaused
+                      ? 'border-sky-600'
+                      : 'border-green-600'
+                  } flex rounded-sm mt-2`}
+                >
+                  <div
+                    className={transfer.isPaused ? 'bg-sky-600' : 'bg-green-600'}
+                    style={{
+                      width: `${averageProgress}%`,
+                    }}
+                  />
+                </div>
+              </>
+            )}
+            {totalReceivers > 1 && hoveredTransfer === transfer && (
+              <div
+                className="absolute top-0 left-0 bg-white p-4 border border-gray-300"
+                style={{ zIndex: 1000 }}
+              >
+                <h4 className="text-lg font-semibold">Progress Details</h4>
+                {transfer.receiverPeers.map((receiver:any) => (
+                  <div key={receiver.id}>
+                    {receiver.name}:{' '}
+                    {receiver.progress !== null
+                      ? `${receiver.progress.toFixed(0)}%`
+                      : 'Not started'}
+                  </div>
                 ))}
               </div>
+            )}
+          </div>
+        );
+      })}
               {/* buttons */}
               <div className="flex w-72 mx-4 m-auto space-x-4 justify-end">
                 {transfer.progress!= null || transfer.progress! > 0 ?(
@@ -247,6 +355,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
               }
               </div>
               </div>
+
           ))}
 
           <br/>
