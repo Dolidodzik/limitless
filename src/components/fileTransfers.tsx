@@ -310,7 +310,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
             )}
             {totalReceivers > 1 && hoveredTransfer === transfer && (
               <div
-                className="absolute top-0 left-0 bg-white p-4 border border-gray-300"
+                className="absolute top-0 left-0 bg-transparent p-4 border border-gray-300"
                 style={{ zIndex: 1000 }}
               >
                 <h4 className="text-lg font-semibold">Progress Details</h4>
