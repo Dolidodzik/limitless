@@ -160,7 +160,11 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
     const isSendButtonHidden = (transferID:any) => {
       return hiddenSendButtons.includes(transferID);
     };
- 
+
+    function findPeerNickname(peerId: string): string | null {
+      const connection = AppGlobals.connections.find(conn => conn.peerId === peerId);
+      return connection ? connection.peerNickname : null;
+  }
 
     
     return (
@@ -316,7 +320,7 @@ export const FileTransfers = (props: {myPeerId: string, chatRef: React.RefObject
                 <h4 className="text-lg font-semibold">Progress Details</h4>
                 {transfer.receiverPeers.map((receiver:any) => (
                   <div key={receiver.id}>
-                    {receiver.name}:{' '}
+                    {findPeerNickname(receiver.id)}:{' '}
                     {receiver.progress !== null
                       ? `${receiver.progress.toFixed(0)}%`
                       : 'Not started'}
